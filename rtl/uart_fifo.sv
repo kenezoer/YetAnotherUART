@@ -29,8 +29,11 @@ module uart_fifo
     import uart_pkg::*;
 //|------------------------------------
 #(
-
+    parameter   bit         FIFO_PARITY_ENABLE  = 1,
+    parameter               FIFO_DEPTH          = 8,
+    parameter               FIFO_WIDTH          = 8
 )(
+    
 
 );
 

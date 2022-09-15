@@ -21,8 +21,8 @@
  */
 
 
-`ifndef     __KENEZOER_UART_RX_DEFINED__
-`define     __KENEZOER_UART_RX_DEFINED__
+`ifndef     __KENEZOER_UART_PKG_DEFINED__
+`define     __KENEZOER_UART_PKG_DEFINED__
 
 package uart_pkg;
 
@@ -32,7 +32,10 @@ package uart_pkg;
     localparam      APB_ADDR_VALUABLE_WIDTH = 12;           //| 4K Range slave access
 
     localparam      DFIFO_DEPTH             = 8;            //| Downstream FIFO depth
+    localparam      DFIFO_DEPTH_WIDTH       = $clog2(DFIFO_DEPTH);
+
     localparam      UFIFO_DEPTH             = 8;            //| Upstream FIFO depth
+    localparam      UFIFO_DEPTH_WIDTH       = $clog2(UFIFO_DEPTH);
 
 
     /* ------------------------------------------------------------------------------ */
@@ -114,8 +117,11 @@ package uart_pkg;
         
         typedef struct packed {
             // todo
-            uart_control_regs_t    CTRL;                    /* [1 dword] */  
-            uart_dfifo_t           DFIFO;                   /* [0 dword] */  
+            uart_irq_regs_t         IRQ_EVENT;              /* [4 dword] */
+            uart_irq_regs_t         IRQ_MASK;               /* [3 dword] */
+            uart_irq_regs_t         IRQ_EN;                 /* [2 dword] */
+            uart_control_regs_t     CTRL;                   /* [1 dword] */  
+            uart_dfifo_t            DFIFO;                  /* [0 dword] */  
         } uart_rw_regs_t;
 
     /* ------------------------------------------------------------------------------ */
@@ -137,8 +143,11 @@ package uart_pkg;
 
     /* ------------------------------------------------------------------------------ */
 
+    localparam      UFIFO_OFFSET            = $bits(uart_rw_regs_t) / 8;
+    localparam      DFIFO_OFFSET            = 0;
+
 
 endpackage : uart_pkg
 
 
-`endif    /*__KENEZOER_UART_RX_DEFINED__*/
+`endif    /*__KENEZOER_UART_PKG_DEFINED__*/
