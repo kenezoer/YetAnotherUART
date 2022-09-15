@@ -47,9 +47,61 @@ module uart_regmap
     output  logic   [APB_DATA_WIDTH-1:0]        o_apb_prdata,
     output  logic                               o_apb_pready,
 
-    //| Registers Maps
+    //| Registers
     output  uart_regmap_t                       REGMAP_OUT
 );
+
+    //|-----------------------------
+    //| Localparams
+    //|-----------------------------
+    localparam  TOTAL_REGS_BYTES        = $bits(REGMAP_OUT)     / 8;
+    localparam  RW_REGS_BYTES           = $bits(REGMAP_OUT.RW)  / 8;
+    localparam  APB_BYTES               = APB_DATA_WIDTH        / 8;
+    localparam  ALLOWED_ADDR_RANGE      = TOTAL_REGS_BYTES  - APB_BYTES;
+    localparam  ALLOWED_RW_ADDR_RANGE   = RW_REGS_BYTES     - APB_BYTES;
+
+    //|-----------------------------
+    //| Local Variables
+    //|-----------------------------
+    logic                   ro_write_error;                             //| Read Only regs write request occured
+    logic                   miss_address_error;                         //| Requested reg doesn't exists
+    logic                   wr_en;                                      //| Write Enable
+    logic                   rd_en;                                      //| Read  Enable
+    logic                   flag_error;                                 //| Error flag for internal use
+
+    /* ------------------------------------------ APB3 Slave Logic --------------------------------------------- */
+
+    always_comb wr_en   = i_apb_psel && i_apb_penable &&  i_apb_pwrite; //| Write Enable
+    always_comb rd_en   = i_apb_psel && i_apb_penable && !i_apb_pwrite; //| Read  Enable
+
+    /* ------------------------------------------------------------- */
+
+    always_comb ro_write_error      = (i_apb_paddr > ALLOWED_RW_ADDR_RANGE) &&  wr_en;
+    always_comb miss_address_error  = (i_apb_paddr > ALLOWED_ADDR_RANGE)    && (wr_en || rd_en);
+
+    /* ------------------------------------------------------------- */
+
+    always_ff@(posedge i_apb_pclk or negedge i_apb_presetn)
+    if(!i_apb_presetn)
+        o_apb_pready        <= '0;
+    else begin
+        if(wr_en || rd_en)
+            o_apb_pready    <= '1;
+        else
+            o_apb_pready    <= '0;
+    end
+
+    /* ------------------------------------------------------------- */
+
+    always_comb flag_error      =   ro_write_error          ||
+                                    miss_address_error;
+
+    always_comb o_apb_pslverr   =   flag_error              && 
+                                    o_apb_pready;
+
+    /* ------------------------------------------------------------- */
+
+
 
 
 endmodule : uart_regmap

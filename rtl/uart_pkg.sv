@@ -36,6 +36,7 @@ package uart_pkg;
 
 
     /* ------------------------------------------------------------------------------ */
+                            /* IRQ REGISTERS */
 
         typedef struct packed {
 
@@ -56,6 +57,7 @@ package uart_pkg;
         } uart_irq_regs_t;
 
     /* ------------------------------------------------------------------------------ */
+                            /* STATS REGISTERS */
 
         typedef struct packed {
 
@@ -74,6 +76,7 @@ package uart_pkg;
         } uart_stats_t;
 
     /* ------------------------------------------------------------------------------ */
+                            /* HARDWARE INFO REGISTERS */
 
         typedef struct packed {
         /* [31]     */  logic           parity_check_en;    /* [Read Only]  FIFO Parity Check Enable        */
@@ -84,23 +87,52 @@ package uart_pkg;
         } uart_hwinfo_t;
 
     /* ------------------------------------------------------------------------------ */
+                            /* CONTROL REGISTERS */
 
         typedef struct packed {
-        /* [31:8]   */  logic   [23:0]  reserved;           /* [Read Only]  Downstream FIFO input           */
-        /* [7:0]    */  logic   [7:0]   ufifo_output;       /* [Read Only]  Downstream FIFO input           */
+            // todo
+        } uart_control_regs_t;
+
+    /* ------------------------------------------------------------------------------ */
+                            /* UPSTREAM FIFO REGISTERS */
+
+        typedef struct packed {
+        /* [31:8]   */  logic   [23:0]  reserved;           /* [Read Only]  Upstream FIFO input             */
+        /* [7:0]    */  logic   [7:0]   ufifo_output;       /* [Read Only]  Upstream FIFO input             */
         } uart_ufifo_t;
 
     /* ------------------------------------------------------------------------------ */
+                            /* DOWNSTREAM FIFO REGISTERS */
 
         typedef struct packed {
         /* [31:8]   */  logic   [23:0]  reserved;           /* [Read Only]  Downstream FIFO input           */
         /* [7:0]    */  logic   [7:0]   dfifo_input;        /* [Read/Write] Downstream FIFO input           */
-        } uart_ufifo_t;
+        } uart_dfifo_t;
 
     /* ------------------------------------------------------------------------------ */
+                            /* RW REGISTERS */
+        
+        typedef struct packed {
+            // todo
+            uart_control_regs_t    CTRL;                    /* [1 dword] */  
+            uart_dfifo_t           DFIFO;                   /* [0 dword] */  
+        } uart_rw_regs_t;
+
+    /* ------------------------------------------------------------------------------ */
+                            /* RO REGISTERS */
+        
+        typedef struct packed {
+            uart_hwinfo_t          HWINFO;                  /* [2 dword] */  
+            uart_stats_t           STATS;                   /* [1 dword] */  
+            uart_ufifo_t           UFIFO;                   /* [0 dword] */  
+        } uart_ro_regs_t;
+
+    /* ------------------------------------------------------------------------------ */
+                            /* MAIN REGISTERS */
                 
         typedef struct packed {
-
+            uart_ro_regs_t         RO;                      /* [3 dwords] */ 
+            uart_rw_regs_t         RW;                      /* [7 dwords] */ 
         } uart_regmap_t;
 
     /* ------------------------------------------------------------------------------ */
