@@ -56,7 +56,9 @@ module uart_top
 
 );
 
-    //| Stats
+
+    /* ---------------------------------------- Internal Signals ----------------------------------------- */
+
     logic                                       rx_status;
     logic                                       tx_status;
 
@@ -114,14 +116,16 @@ module uart_top
 
         //| Stats
         .i_rx_status            ( rx_status                 ),
+        .i_tx_status            ( tx_status                 ),
+
         .i_ufifo_full           ( ufifo_full                ),
         .i_ufifo_empty          ( ufifo_empty               ),
         .i_ufifo_used           ( ufifo_used                ),
-        .i_tx_status            ( tx_status                 ),
+        .i_ufifo_output         ( ufifo_output              ),
+        
         .i_dfifo_full           ( dfifo_full                ),
         .i_dfifo_empty          ( dfifo_empty               ),
         .i_dfifo_used           ( dfifo_used                ),
-        .i_ufifo_output         ( ufifo_output              ),
 
         //| Control Signals
         .o_dfifo_input          ( dfifo_input               ),

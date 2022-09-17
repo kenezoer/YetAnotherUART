@@ -26,6 +26,8 @@
 
 package uart_pkg;
 
+    localparam      KENEZOER_BAD_PARAM      = "[PARAM ERROR] Bad parameter value!";
+
     localparam      IP_VERSION_MAJOR        = 1,            //| Major Version of IP Module
                     IP_VERSION_MINOR        = 0;            //| Minor Version of IP Module
 
