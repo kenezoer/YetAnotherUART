@@ -26,13 +26,50 @@
 
 module uart_irq_gen
 //|------- Required Packages ----------
-    import uart_pkg::*;
+    import  uart_pkg::*;
 //|------------------------------------
 #(
-
+    parameter                               EVENTS_NUM  = 32
 )(
+    input                                   i_clk,
+    input                                   i_nrst,
 
+    input           [EVENTS_NUM-1:0]        i_events_enable,
+    input           [EVENTS_NUM-1:0]        i_events_mask,
+    input           [EVENTS_NUM-1:0]        i_events_disable,
+    input           [EVENTS_NUM-1:0]        i_events_itself,
+
+    output  logic   [EVENTS_NUM-1:0]        o_irq_bus,
+    output  logic   [EVENTS_NUM-1:0]        o_events_stats
 );
+
+    /* ------------------------------------------------------------ */
+
+    always_ff@(posedge i_clk or negedge i_nrst)
+    if(!i_nrst)
+        o_events_stats   <= '0;
+    else for(int i = 0; i < EVENTS_NUM; i++) begin
+
+        if(i_events_disable[i])
+            o_events_stats[i]   <= '0;
+        else
+            o_events_stats[i]   <= i_events_enable[i] || i_events_itself[i];
+
+    end
+
+    /* ------------------------------------------------------------ */
+
+    always_ff@(posedge i_clk or negedge i_nrst)
+    if(!i_nrst)
+        o_irq_bust      <= '0;
+    else for(int i = 0; i < EVENTS_NUM; i++) begin
+
+        if(i_events_mask[i])
+            o_irq_bus[i]   <= '0;   //| Used for immediate IRQ de-assertion
+        else
+            o_irq_bus[i]   <= o_events_stats[i];
+
+    end
 
 
 endmodule : uart_irq_gen

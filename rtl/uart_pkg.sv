@@ -26,31 +26,16 @@
 
 package uart_pkg;
 
-    localparam      KENEZOER_BAD_PARAM      = "[PARAM ERROR] Bad parameter value!";
-
-    localparam      IP_VERSION_MAJOR        = 1,            //| Major Version of IP Module
-                    IP_VERSION_MINOR        = 0;            //| Minor Version of IP Module
-
-    localparam      APB_ADDR_VALUABLE_WIDTH = 12;           //| 4K Range slave access
-
-    localparam      DFIFO_DEPTH             = 8;            //| Downstream FIFO depth
-    localparam      DFIFO_DEPTH_WIDTH       = $clog2(DFIFO_DEPTH);
-
-    localparam      UFIFO_DEPTH             = 8;            //| Upstream FIFO depth
-    localparam      UFIFO_DEPTH_WIDTH       = $clog2(UFIFO_DEPTH);
-
-
     /* ------------------------------------------------------------------------------ */
                             /* IRQ REGISTERS */
 
         typedef struct packed {
 
-        /* [31:9]   */  logic   [22:0]  reserved;           /* [Read Only] reserved fields                  */
-        /* [8]      */  logic           uart_bad_frame;     /* [Read Only] UART bad frame given             */
-        /* [7]      */  logic           uart_parity_err;    /* [Read Only] UART parity error (in frame)     */
+        /* [31:8]   */  logic   [23:0]  reserved;           /* [Read Only] reserved fields                  */
+        /* [7]      */  logic           uart_bad_frame;     /* [Read Only] UART bad frame given             */
+        /* [6]      */  logic           uart_parity_err;    /* [Read Only] UART parity error (in frame)     */
         
-        /* [6]      */  logic           ufifo_overflow;     /* [Read Only] Upstream FIFO overflow           */
-        /* [5]      */  logic           ufifo_not_empty;    /* [Read Only] Upstream FIFO not empty          */
+        /* [5]      */  logic           ufifo_full;         /* [Read Only] Upstream FIFO Full               */
         /* [4]      */  logic           ufifo_error;        /* [Read Only] Upstream FIFO parity error       */
 
         /* [3]      */  logic           dfifo_empty;        /* [Read Only] Downstream FIFO Empty            */
@@ -148,6 +133,29 @@ package uart_pkg;
     localparam      UFIFO_OFFSET            = $bits(uart_rw_regs_t) / 8;
     localparam      DFIFO_OFFSET            = 0;
 
+    localparam      IP_VERSION_MAJOR        = 1,                                        //| Major Version of IP Module
+                    IP_VERSION_MINOR        = 0;                                        //| Minor Version of IP Module
+
+    localparam      APB_ADDR_VALUABLE_WIDTH = 12;                                       //| 4K Range slave access
+
+    localparam      DFIFO_DEPTH             = 8;                                        //| Downstream FIFO depth
+    localparam      DFIFO_DEPTH_WIDTH       = $clog2(DFIFO_DEPTH);
+    localparam      UFIFO_DEPTH             = 8;                                        //| Upstream FIFO depth
+    localparam      UFIFO_DEPTH_WIDTH       = $clog2(UFIFO_DEPTH);
+
+    localparam      KENEZOER_BAD_PARAM      = "[PARAM ERROR] Bad parameter value!";
+    localparam      KENEZOER_ERROR          = "[ERROR] An error occured! Module: ";
+    localparam      KENEZOER_WARNING        = "[ERROR] A warning occured! Module: ";
+
+    localparam      IRQ_EVENTS_NUM          = 9;
+    localparam      IRQ_TX_DONE             = 0,
+                    IRQ_RX_DONE             = 1,
+                    IRQ_DFIFO_ERROR         = 2,
+                    IRQ_DFIFO_EMPTY         = 3,
+                    IRQ_UFIFO_ERROR         = 4,
+                    IRQ_UFIFO_FULL          = 5,
+                    IRQ_UART_PARITY_ERR     = 6,
+                    IRQ_UART_BAD_FRAME      = 7;
 
 endpackage : uart_pkg
 

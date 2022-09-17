@@ -169,6 +169,10 @@ module uart_regmap
         REGMAP_OUT.RO.UFIFO.reserved            <= '0;
         REGMAP_OUT.RO.UFIFO.ufifo_output        <= i_ufifo_output;
 
+        /* ------------ IRQ Events auto-clear ---------------------- */
+        if(|REGMAP_OUT.RW.IRQ_EVENT)
+            REGMAP_OUT.RW.IRQ_EVENT             <= '0;
+
     end
 
     /* ------------------------------------------------------------- */

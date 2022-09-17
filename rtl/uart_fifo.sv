@@ -2,7 +2,7 @@
  * ----------------------------------------------------------------------------
  *  Project:  YetAnotherUART
  *  Filename: uart_fifo.sv
- *  Purpose:  Single Clock FWFT FIFO
+ *  Purpose:  Single Clock FWFT (Look-ahead) FIFO
  * ----------------------------------------------------------------------------
  *  Copyright © 2020-2022, Kirill Lyubavin <kenezoer@gmail.com>
  *  
@@ -73,18 +73,32 @@ module uart_fifo
     logic   [FIFO_AW-1:0]               read_ptr,       write_ptr;
     logic   [FIFO_AW:0]                 used_words,     free_words;
 
+
     /* ------------------------------------------------------------ */
-    //| overflow and underflow logic
+    //| overflow/underflow protection
+
+    always_comb valid_read  = i_rd_req && !o_empty;
+    always_comb valid_write = i_wr_req && !o_full;
+
+    /* ------------------------------------------------------------ */
+    //| output flags
 
     always_ff@(posedge i_clk or negedge i_nrst)
     if(!i_nrst) begin
-        o_overflow   <= '0;
-        o_underflow  <= '0;
+        o_overflow  <= '0;
+        o_underflow <= '0;
     end else begin
         o_overflow  <= i_write_req && o_full;
         o_underflow <= i_read_req  && o_empty;
     end
 
+    always_ff@(posedge i_clk or negedge i_nrst)
+    if(!i_nrst)
+        o_valid     <= '0;
+    else if(valid_read)
+        o_valid     <= '1;
+    else
+        o_valid     <= '0;
 
     /* ------------------------------------------------------------ */
     //| Counters Logic
@@ -151,6 +165,43 @@ module uart_fifo
         data_packet_out     <= '0;
     else if(valid_read)
         data_packet_out     <= memory_array[read_ptr];
+
+    /* ------------------------------------------------------------ */
+    //| Assert Zone
+
+    // pragma translate_off
+    // pragma synthesis_off
+
+    property x_propagation_output;
+        @(posedge i_clk)
+        disable iff(!i_nrst)
+        (valid_read) |-> ##1 !($isunknown(fifo_read_do));
+    endproperty
+
+    property underflow_assrt;
+        @(posedge i_clk)
+        disable iff(!i_nrst)
+        (valid_read) |-> ##1 !(o_underflow);
+    endproperty
+
+    property overflow_assrt;
+        @(posedge i_clk)
+        disable iff(!i_nrst)
+        (valid_write) |-> ##1 !(o_overflow);
+    endproperty
+
+    overflow_assrt: assert property (good_write)
+        else $warning("%s %m : FIFO OVERFLOW! \n", KENEZOER_WARNING);
+
+    underflow_assrt: assert property (good_read)
+        else $warning("%s %m : FIFO UNDERFLOW! \n", KENEZOER_WARNING);
+
+    x_propagation_output: assert property (bad_sram_data_out)
+        else $error("%s %m : 'X data appeared! \n", KENEZOER_ERROR);
+
+    // pragma synthesis_on
+    // pragma translate_on
+
 
 
 endmodule : uart_fifo
