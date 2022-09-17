@@ -2,7 +2,7 @@
  * ----------------------------------------------------------------------------
  *  Project:  YetAnotherUART
  *  Filename: uart_fifo.sv
- *  Purpose:  Single Clock FWFT (Look-ahead) FIFO
+ *  Purpose:  Single Clock FIFO
  * ----------------------------------------------------------------------------
  *  Copyright © 2020-2022, Kirill Lyubavin <kenezoer@gmail.com>
  *  
@@ -31,7 +31,7 @@ module uart_fifo
 #(
     parameter   bit                     FIFO_PARITY_ENABLE          = 1,
     parameter                           FIFO_AW                     = 2,
-    parameter                           FIFO_DW                     = 8,
+    parameter                           FIFO_DW                     = 8
 )(
     //| Inputs
     input                               i_clk,
@@ -201,8 +201,6 @@ module uart_fifo
 
     // pragma synthesis_on
     // pragma translate_on
-
-
 
 endmodule : uart_fifo
 

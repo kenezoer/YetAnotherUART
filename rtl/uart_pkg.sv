@@ -139,9 +139,12 @@ package uart_pkg;
     localparam      APB_ADDR_VALUABLE_WIDTH = 12;                                       //| 4K Range slave access
 
     localparam      DFIFO_DEPTH             = 8;                                        //| Downstream FIFO depth
-    localparam      DFIFO_DEPTH_WIDTH       = $clog2(DFIFO_DEPTH);
+    localparam      DFIFO_USED_WIDTH        = $clog2(DFIFO_DEPTH);
+    localparam      DFIFO_WIDTH             = 8
+    
     localparam      UFIFO_DEPTH             = 8;                                        //| Upstream FIFO depth
-    localparam      UFIFO_DEPTH_WIDTH       = $clog2(UFIFO_DEPTH);
+    localparam      UFIFO_USED_WIDTH        = $clog2(UFIFO_DEPTH);
+    localparam      UFIFO_WIDTH             = 8
 
     localparam      KENEZOER_BAD_PARAM      = "[PARAM ERROR] Bad parameter value!";
     localparam      KENEZOER_ERROR          = "[ERROR] An error occured! Module: ";
