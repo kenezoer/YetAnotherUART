@@ -85,29 +85,29 @@ module uart_top
 
     uart_fifo_fwft #(
 
-        .FIFO_PARITY_ENABLE     ( FIFO_PARITY_CHECK_EN                          ),
-        .FIFO_AW                ( UFIFO_USED_WIDTH                              ),
-        .FIFO_DW                ( UFIFO_WIDTH                                   )
+        .FIFO_PARITY_ENABLE     ( FIFO_PARITY_CHECK_EN      ),
+        .FIFO_AW                ( UFIFO_USED_WIDTH          ),
+        .FIFO_DW                ( UFIFO_WIDTH               )
 
     ) upstream_fifo_inst (
 
-        .i_clk                  ( i_apb_pclk                                    ),
-        .i_nrst                 ( i_apb_presetn                                 ),
-        .i_rd_req               ( ufifo_read_req                                ),
-        .i_wr_req               ( ufifo_write_req                               ),
-        .i_data_in              ( ufifo_data_in                                 ),
+        .i_clk                  ( i_apb_pclk                ),
+        .i_nrst                 ( i_apb_presetn             ),
+        .i_rd_req               ( ufifo_read_req            ),
+        .i_wr_req               ( ufifo_write_req           ),
+        .i_data_in              ( ufifo_data_in             ),
 
-        .o_data_out             ( ufifo_data_out                                ),
-        .o_free                 ( ufifo_free                                    ),
-        .o_used                 ( ufifo_used                                    ),
-        .o_valid                ( ufifo_valid                                   ),
-        .o_full                 ( ufifo_full                                    ),
-        .o_almost_full          ( ufifo_almfull                                 ),
-        .o_empty                ( ufifo_empty                                   ),
-        .o_almost_empty         ( ufifo_almempty                                ),
-        .o_overflow             ( ufifo_overflow                                ),
-        .o_underflow            ( ufifo_underflow                               ),
-        .o_parity_error         ( ufifo_parity_error                            ));
+        .o_data_out             ( ufifo_data_out            ),
+        .o_free                 ( ufifo_free                ),
+        .o_used                 ( ufifo_used                ),
+        .o_valid                ( ufifo_valid               ),
+        .o_full                 ( ufifo_full                ),
+        .o_almost_full          ( ufifo_almfull             ),
+        .o_empty                ( ufifo_empty               ),
+        .o_almost_empty         ( ufifo_almempty            ),
+        .o_overflow             ( ufifo_overflow            ),
+        .o_underflow            ( ufifo_underflow           ),
+        .o_parity_error         ( ufifo_parity_error        ));
 
     /* -------------------------------------- Downstream FIFO INST ---------------------------------------- */
 
@@ -132,29 +132,29 @@ module uart_top
 
     uart_fifo_fwft #(
 
-        .FIFO_PARITY_ENABLE     ( FIFO_PARITY_CHECK_EN                          ),
-        .FIFO_AW                ( UFIFO_USED_WIDTH                              ),
-        .FIFO_DW                ( UFIFO_WIDTH                                   )
+        .FIFO_PARITY_ENABLE     ( FIFO_PARITY_CHECK_EN      ),
+        .FIFO_AW                ( UFIFO_USED_WIDTH          ),
+        .FIFO_DW                ( UFIFO_WIDTH               )
 
     ) upstream_fifo_inst (
 
-        .i_clk                  ( i_apb_pclk                                    ),
-        .i_nrst                 ( i_apb_presetn                                 ),
-        .i_rd_req               ( dfifo_read_req                                ),
-        .i_wr_req               ( dfifo_write_req                               ),
-        .i_data_in              ( dfifo_data_in                                 ),
+        .i_clk                  ( i_apb_pclk                ),
+        .i_nrst                 ( i_apb_presetn             ),
+        .i_rd_req               ( dfifo_read_req            ),
+        .i_wr_req               ( dfifo_write_req           ),
+        .i_data_in              ( dfifo_data_in             ),
 
-        .o_data_out             ( dfifo_data_out                                ),
-        .o_free                 ( dfifo_free                                    ),
-        .o_used                 ( dfifo_used                                    ),
-        .o_valid                ( dfifo_valid                                   ),
-        .o_full                 ( dfifo_full                                    ),
-        .o_almost_full          ( dfifo_almfull                                 ),
-        .o_empty                ( dfifo_empty                                   ),
-        .o_almost_empty         ( dfifo_almempty                                ),
-        .o_overflow             ( dfifo_overflow                                ),
-        .o_underflow            ( dfifo_underflow                               ),
-        .o_parity_error         ( dfifo_parity_error                            ));
+        .o_data_out             ( dfifo_data_out            ),
+        .o_free                 ( dfifo_free                ),
+        .o_used                 ( dfifo_used                ),
+        .o_valid                ( dfifo_valid               ),
+        .o_full                 ( dfifo_full                ),
+        .o_almost_full          ( dfifo_almfull             ),
+        .o_empty                ( dfifo_empty               ),
+        .o_almost_empty         ( dfifo_almempty            ),
+        .o_overflow             ( dfifo_overflow            ),
+        .o_underflow            ( dfifo_underflow           ),
+        .o_parity_error         ( dfifo_parity_error        ));
 
     /* ----------------------------------------- Receiver INST -------------------------------------------- */
 
@@ -166,83 +166,92 @@ module uart_top
 
     /* -------------------------------------- IRQ Generator INST ------------------------------------------ */
 
-    logic           [31:0]                      irq_events_enable;
-    logic           [31:0]                      irq_events_mask;
-    logic           [31:0]                      irq_events;
-    logic           [31:0]                      irq_events_stats_ext;
+    logic           [IRQ_EVENTS_NUM-1:0]        irq_events_enable;
+    logic           [IRQ_EVENTS_NUM-1:0]        irq_events_mask;
+    logic           [IRQ_EVENTS_NUM-1:0]        irq_events;
 
     logic           [IRQ_EVENTS_NUM-1:0]        irq_events_bus;
     logic           [IRQ_EVENTS_NUM-1:0]        internal_irqs;
     logic           [IRQ_EVENTS_NUM-1:0]        irq_events_stats;
 
-    always_comb o_irq                   = |internal_irqs;
-    always_comb irq_events_stats_ext    = '0 | irq_events_stats;
+    always_comb o_irq                               = |internal_irqs;
+
+    always_comb irq_events_enable                   = REGMAP.RW.IRQ_EN      [IRQ_EVENTS_NUM-1:0];  
+    always_comb irq_events_mask                     = REGMAP.RW.IRQ_MASK    [IRQ_EVENTS_NUM-1:0]; 
+    always_comb irq_events                          = REGMAP.RW.IRQ_EVENT   [IRQ_EVENTS_NUM-1:0];
+
+    always_comb irq_events_bus[IRQ_TX_DONE        ] = tx_done;              // todo : level to edge
+    always_comb irq_events_bus[IRQ_RX_DONE        ] = rx_done;              // todo : level to edge
+    always_comb irq_events_bus[IRQ_DFIFO_ERROR    ] = dfifo_parity_error;   // todo : level to edge
+    always_comb irq_events_bus[IRQ_DFIFO_EMPTY    ] = dfifo_empty;          // todo : level to edge
+    always_comb irq_events_bus[IRQ_UFIFO_ERROR    ] = ufifo_parity_error;   // todo : level to edge
+    always_comb irq_events_bus[IRQ_UFIFO_FULL     ] = ufifo_full;           // todo : level to edge
+    always_comb irq_events_bus[IRQ_UART_PARITY_ERR] = rx_parity_error;      // todo : level to edge
+    always_comb irq_events_bus[IRQ_UART_BAD_FRAME ] = rx_bad_frame;         // todo : level to edge
 
     uart_irq_gen #(
         
-        .EVENTS_NUM             ( IRQ_EVENTS_NUM                                )
+        .EVENTS_NUM             ( IRQ_EVENTS_NUM            )
 
     ) irq_gen_inst  (
-        .i_clk                  ( i_apb_pclk                                    ),
-        .i_nrst                 ( i_apb_presetn                                 ),
 
-        .i_events_enable        ( irq_events_enable [IRQ_EVENTS_NUM-1:0]        ),
-        .i_events_mask          ( irq_events_mask   [IRQ_EVENTS_NUM-1:0]        ),
-        .i_events_disable       ( irq_events        [IRQ_EVENTS_NUM-1:0]        ),
-        .i_events_itself        ( irq_events_bus                                ),
+        .i_clk                  ( i_apb_pclk                ),
+        .i_nrst                 ( i_apb_presetn             ),
 
-        .o_irq_bus              ( internal_irqs                                 ),
-        .o_events_stats         ( irq_events_stats                              ));
+        .i_events_enable        ( irq_events_enable         ),
+        .i_events_mask          ( irq_events_mask           ),
+        .i_events_disable       ( irq_events                ),
+        .i_events_itself        ( irq_events_bus            ),
+
+        .o_irq_bus              ( internal_irqs             ),
+        .o_events_stats         ( irq_events_stats          ));
 
     /* ------------------------------------------ REGMAP INST --------------------------------------------- */
 
     uart_regmap #(
 
-        .APB_ADDR_WIDTH         ( APB_ADDR_WIDTH                                ),
-        .APB_DATA_WIDTH         ( APB_DATA_WIDTH                                ),
-        .FIFO_PARITY_CHECK_EN   ( FIFO_PARITY_CHECK_EN                          )
-        
+        .APB_ADDR_WIDTH         ( APB_ADDR_WIDTH            ),
+        .APB_DATA_WIDTH         ( APB_DATA_WIDTH            ),
+        .FIFO_PARITY_CHECK_EN   ( FIFO_PARITY_CHECK_EN      )
+
     ) regmap_inst (
 
-        //| APB3 Interface Signals
-        .i_apb_pclk             ( i_apb_pclk                                    ),
-        .i_apb_presetn          ( i_apb_presetn                                 ),
+    //| APB3 Interface Signals
+        .i_apb_pclk             ( i_apb_pclk                ),
+        .i_apb_presetn          ( i_apb_presetn             ),
 
-        .i_apb_paddr            ( i_apb_paddr                                   ),
-        .i_apb_pwdata           ( i_apb_pwdata                                  ),
-        .i_apb_pwrite           ( i_apb_pwrite                                  ),
-        .i_apb_psel             ( i_apb_psel                                    ),
-        .i_apb_penable          ( i_apb_penable                                 ),
+        .i_apb_paddr            ( i_apb_paddr               ),
+        .i_apb_pwdata           ( i_apb_pwdata              ),
+        .i_apb_pwrite           ( i_apb_pwrite              ),
+        .i_apb_psel             ( i_apb_psel                ),
+        .i_apb_penable          ( i_apb_penable             ),
         
-        .o_apb_pslverr          ( o_apb_pslverr                                 ),
-        .o_apb_prdata           ( o_apb_prdata                                  ),
-        .o_apb_pready           ( o_apb_pready                                  ),
+        .o_apb_pslverr          ( o_apb_pslverr             ),
+        .o_apb_prdata           ( o_apb_prdata              ),
+        .o_apb_pready           ( o_apb_pready              ),
 
-        //| Stats
-        .i_rx_status            ( rx_status                                     ),
-        .i_tx_status            ( tx_status                                     ),
+    //| Stats
+        .i_rx_status            ( rx_status                 ),
+        .i_tx_status            ( tx_status                 ),
 
-        .i_ufifo_full           ( ufifo_full                                    ),
-        .i_ufifo_empty          ( ufifo_empty                                   ),
-        .i_ufifo_used           ( ufifo_used                                    ),
-        .i_ufifo_output         ( ufifo_output                                  ),
+        .i_ufifo_full           ( ufifo_full                ),
+        .i_ufifo_empty          ( ufifo_empty               ),
+        .i_ufifo_used           ( ufifo_used                ),
+        .i_ufifo_output         ( ufifo_output              ),
         
-        .i_dfifo_full           ( dfifo_full                                    ),
-        .i_dfifo_empty          ( dfifo_empty                                   ),
-        .i_dfifo_used           ( dfifo_used                                    ),
+        .i_dfifo_full           ( dfifo_full                ),
+        .i_dfifo_empty          ( dfifo_empty               ),
+        .i_dfifo_used           ( dfifo_used                ),
 
-        .i_irq_stats            ( irq_events_stats_ext                          ),
-        .o_irq_enable           ( irq_events_enable                             ),
-        .o_irq_mask             ( irq_events_mask                               ),
-        .o_irq_disable          ( irq_events                                    ),
+        .i_irq_stats            ( irq_events_stats_ext      ),
 
-        //| Control Signals
-        .o_dfifo_input          ( dfifo_input                                   ),
-        .o_dfifo_write_req      ( dfifo_write_req                               ),
-        .o_ufifo_read_req       ( ufifo_read_req                                ),
+    //| Control Signals
+        .o_dfifo_input          ( dfifo_input               ),
+        .o_dfifo_write_req      ( dfifo_write_req           ),
+        .o_ufifo_read_req       ( ufifo_read_req            ),
 
-        //| Registers
-        .REGMAP_OUT             ( REGMAP                                        ));
+    //| Registers
+        .REGMAP_OUT             ( REGMAP                    ));
 
 
 endmodule : uart_top
