@@ -59,8 +59,8 @@ module uart_fifo
 
     //| Check correctness of parameter values
     generate
-        if(DW < 1) $error("%m : %s: DW must be > 0. \n", KENEZOER_BAD_PARAM);
-        if(AW < 1) $error("%m : %s: AW must be > 0. \n", KENEZOER_BAD_PARAM);
+        if(DW < 1) $error("%s: %m : DW must be > 0. \n", KENEZOER_BAD_PARAM);
+        if(AW < 1) $error("%s: %m : AW must be > 0. \n", KENEZOER_BAD_PARAM);
     endgenerate
 
     //|---------------------------

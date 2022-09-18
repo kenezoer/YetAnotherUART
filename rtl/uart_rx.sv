@@ -44,6 +44,80 @@ module uart_rx
 
     /* --------------------------------------------------------------------------------------------------------- */
     logic   [31:0]                  bit_length_counter;
+
+
+    /* --------------------------------------- FSM ------------------------------------------------------------- */
+
+    enum logic [2:0]    {
+        IDLE                = 3'd0,
+        START               = 3'd1,
+        GET_DATA            = 3'd2,
+        GET_PARITY          = 3'd3,
+        GET_STOP_BIT        = 3'd4,
+        GET_STOP_BIT_2      = 3'd5,
+        FINISH
+    } rx_state, rx_state_next;
+
+    always_ff@(posedge i_clk or negedge i_nrst)
+    if(!i_nrst)
+        rx_state    <= IDLE;
+    else
+        rx_state    <= rx_state_next;
+
+
+    always_comb begin
+
+        case(rx_state)
+
+            IDLE: begin
+
+            end
+
+            /* ------------------------------ */
+
+            START: begin
+
+            end
+
+            /* ------------------------------ */
+
+            GET_DATA:  begin
+
+            end
+
+            /* ------------------------------ */
+
+            GET_PARITY:  begin
+
+            end
+
+            /* ------------------------------ */
+
+            GET_STOP_BIT:  begin
+
+            end
+
+            /* ------------------------------ */
+
+            GET_STOP_BIT_2:  begin
+
+            end
+
+            /* ------------------------------ */
+
+            default /* FINISH */:  begin
+
+            end
+
+            /* ------------------------------ */
+
+        endcase
+
+    end
+
+
+
+    /* --------------------------------------- RX Logic ----------------------------------------------------------- */
     
 
 

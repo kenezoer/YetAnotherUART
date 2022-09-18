@@ -51,6 +51,9 @@ module uart_top
     output  logic                               o_tx,
     input                                       i_rx,
 
+    output  logic                               o_rts,                  //| HW Flow control: Ready to send
+    input                                       i_cts,                  //| HW Flow control: Clear to send
+
     //| Misc
     output  logic                               o_irq
 
@@ -61,6 +64,20 @@ module uart_top
 
     logic                                       rx_status;
     logic                                       tx_status;
+    logic                                       cts_sync;
+    logic                                       rx_sync;
+
+    /* --------------------------------------- CDC Synchronization ---------------------------------------- */
+
+    uart_ndff_bus#(
+        .CDC_STAGES             ( 3                     ),
+        .BUS_WIDTH              ( 2                     )
+    ) inputs_sync (
+        .i_clk                  ( i_apb_pclk            ),
+        .i_nrst                 ( i_apb_presetn         ),
+
+        .i_data_in              ( {i_cts, i_rx}         ),
+        .o_data_out             ( {cts_sync, rx_sync}   ));
 
     /* --------------------------------------- Upstream FIFO INST ----------------------------------------- */
 
