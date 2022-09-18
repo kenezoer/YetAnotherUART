@@ -171,6 +171,7 @@ module uart_top
     logic           [IRQ_EVENTS_NUM-1:0]        irq_events;
 
     logic           [IRQ_EVENTS_NUM-1:0]        irq_events_bus;
+    logic           [IRQ_EVENTS_NUM-1:0]        irq_events_bus_edged;
     logic           [IRQ_EVENTS_NUM-1:0]        internal_irqs;
     logic           [IRQ_EVENTS_NUM-1:0]        irq_events_stats;
 
@@ -180,14 +181,33 @@ module uart_top
     always_comb irq_events_mask                     = REGMAP.RW.IRQ_MASK    [IRQ_EVENTS_NUM-1:0]; 
     always_comb irq_events                          = REGMAP.RW.IRQ_EVENT   [IRQ_EVENTS_NUM-1:0];
 
-    always_comb irq_events_bus[IRQ_TX_DONE        ] = tx_done;              // todo : level to edge
-    always_comb irq_events_bus[IRQ_RX_DONE        ] = rx_done;              // todo : level to edge
-    always_comb irq_events_bus[IRQ_DFIFO_ERROR    ] = dfifo_parity_error;   // todo : level to edge
-    always_comb irq_events_bus[IRQ_DFIFO_EMPTY    ] = dfifo_empty;          // todo : level to edge
-    always_comb irq_events_bus[IRQ_UFIFO_ERROR    ] = ufifo_parity_error;   // todo : level to edge
-    always_comb irq_events_bus[IRQ_UFIFO_FULL     ] = ufifo_full;           // todo : level to edge
-    always_comb irq_events_bus[IRQ_UART_PARITY_ERR] = rx_parity_error;      // todo : level to edge
-    always_comb irq_events_bus[IRQ_UART_BAD_FRAME ] = rx_bad_frame;         // todo : level to edge
+    always_comb irq_events_bus[IRQ_TX_DONE        ] = tx_done;
+    always_comb irq_events_bus[IRQ_RX_DONE        ] = rx_done;
+    always_comb irq_events_bus[IRQ_DFIFO_ERROR    ] = dfifo_parity_error;
+    always_comb irq_events_bus[IRQ_DFIFO_EMPTY    ] = dfifo_empty;
+    always_comb irq_events_bus[IRQ_UFIFO_ERROR    ] = ufifo_parity_error;
+    always_comb irq_events_bus[IRQ_UFIFO_FULL     ] = ufifo_full;
+    always_comb irq_events_bus[IRQ_UART_PARITY_ERR] = rx_parity_error;
+    always_comb irq_events_bus[IRQ_UART_BAD_FRAME ] = rx_bad_frame;
+
+    /* --------------------- */
+
+    uart_edge_detector #(
+
+        .BUS_WIDTH              ( IRQ_EVENTS_NUM            )
+
+    ) irq_events_edge_detector (
+
+        .i_clk                  ( i_apb_pclk                ),
+        .i_nrst                 ( i_apb_presetn             ),
+
+        .i_data                 ( irq_events_bus            ),
+
+        .o_posedge              ( irq_events_bus_edged      ),
+        .o_negedge              ( /* not used */            ),
+        .o_both_edges           ( /* not used */            ));
+
+    /* --------------------- */
 
     uart_irq_gen #(
         
@@ -201,7 +221,7 @@ module uart_top
         .i_events_enable        ( irq_events_enable         ),
         .i_events_mask          ( irq_events_mask           ),
         .i_events_disable       ( irq_events                ),
-        .i_events_itself        ( irq_events_bus            ),
+        .i_events_itself        ( irq_events_bus_edged      ),
 
         .o_irq_bus              ( internal_irqs             ),
         .o_events_stats         ( irq_events_stats          ));

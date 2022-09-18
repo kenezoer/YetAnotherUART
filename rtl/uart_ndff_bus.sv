@@ -1,8 +1,8 @@
 /* 
  * ----------------------------------------------------------------------------
  *  Project:  YetAnotherUART
- *  Filename: uart_rx.sv
- *  Purpose:  UART receiver Module
+ *  Filename: uart_ndff.sv
+ *  Purpose:  UART NDFF Bus CDC synchronizer
  * ----------------------------------------------------------------------------
  *  Copyright © 2020-2022, Kirill Lyubavin <kenezoer@gmail.com>
  *  
@@ -21,34 +21,33 @@
  */
 
 
-`ifndef     __KENEZOER_UART_RX_DEFINED__
-`define     __KENEZOER_UART_RX_DEFINED__
+`ifndef     __KENEZOER_UART_NDFF_DEFINED__
+`define     __KENEZOER_UART_NDFF_DEFINED__
 
-module uart_rx
-//|------- Required Packages ----------
-    import uart_pkg::*;
-//|------------------------------------
-(
-    input                           i_clk,
-    input                           i_nrst,
+module uart_ndff_bus#(
+    parameter                           CDC_STAGES      = 2,
+    parameter                           BUS_WIDTH       = 32,
+)(
+    input                               i_clk,
+    input                               i_nrst,
 
-    input           [31:0]          i_bit_length,
-    input                           i_hw_flow_control_enable,
-    input                           i_rx,
-
-    output  logic                   o_rx_done,
-    output  logic                   o_rx_frame_error,
-    output  logic                   o_rx_parity_error,
-    output  logic   [8:0]           o_rx_word,                  //| 8 bits + parity bit
+    input           [BUS_WIDTH-1:0]     i_data_in,
+    output          [BUS_WIDTH-1:0]     o_data_out
 );
 
     /* --------------------------------------------------------------------------------------------------------- */
-    logic   [31:0]                  bit_length_counter;
+    logic   [CDC_STAGES-1:0]    [BUS_WIDTH-1:0]     cdc_bus;
+
+
+    always_ff@(posedge i_clk or negedge i_nrst)
+    if(!i_nrst)
+        cdc_bus     <= '0;
+    else
+        cdc_bus     <= {cdc_bus[CDC_STAGES-2:0], i_data_in};
+
+    always_comb o_data_out  = cdc_bus[CDC_STAGES-1];
     
-
-
-
 endmodule : uart_rx
 
 
-`endif    /*__KENEZOER_UART_RX_DEFINED__*/
+`endif    /*__KENEZOER_UART_NDFF_DEFINED__*/

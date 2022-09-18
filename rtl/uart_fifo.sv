@@ -190,13 +190,13 @@ module uart_fifo
         (valid_write) |-> ##1 !(o_overflow);
     endproperty
 
-    overflow_assrt: assert property (good_write)
+    fifo_overflow_assrt: assert property (overflow_assrt)
         else $warning("%s %m : FIFO OVERFLOW! \n", KENEZOER_WARNING);
 
-    underflow_assrt: assert property (good_read)
+    fifo_underflow_assrt: assert property (underflow_assrt)
         else $warning("%s %m : FIFO UNDERFLOW! \n", KENEZOER_WARNING);
 
-    x_propagation_output: assert property (bad_sram_data_out)
+    fifo_x_propagation_output: assert property (x_propagation_output)
         else $error("%s %m : 'X data appeared! \n", KENEZOER_ERROR);
 
     // pragma synthesis_on
