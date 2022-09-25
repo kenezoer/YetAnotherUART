@@ -1,0 +1,10 @@
+uart_pkg.sv
+uart_edge_detector.sv
+uart_fifo_fwft.sv
+uart_fifo.sv
+uart_irq_gen.sv
+uart_ndff_bus.sv
+uart_regmap.sv
+uart_rx.sv
+uart_tx.sv
+uart_top.sv

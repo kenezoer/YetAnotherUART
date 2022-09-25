@@ -42,13 +42,16 @@ module uart_rx
     output  logic                   o_rx_started,
     output  logic                   o_rx_frame_error,
     output  logic                   o_rx_parity_error,
-    output  logic   [8:0]           o_rx_word,                  //| 8 bits + parity bit
+    output  logic   [8:0]           o_rx_word                   //| 8 bits + parity bit
 );
 
     /* --------------------------------------------------------------------------------------------------------- */
 
     logic   [31:0]                  bit_length_counter;
     logic   [3:0]                   bit_counter;
+    logic                           bit_delay_done;
+    logic   [31:0]                  bit_delay_counter;
+    logic                           stop_2nd_bit_presents;
 
     /* --------------------------------------- FSM ------------------------------------------------------------- */
 
@@ -126,7 +129,7 @@ module uart_rx
                     else
                         rx_state_next   = FINISH;
                 end else
-                    rx_state_next   = GET_STOP_BIT;
+                    rx_state_next       = GET_STOP_BIT;
 
             end
 
@@ -166,11 +169,11 @@ module uart_rx
     always_comb bit_delay_done = (bit_delay_counter == 32'd1);
 
 
-    always_ff@(posedge i_clk or negedge i_nrst)
-    if(!i_nrst)
-        bit_counter <= '0;
-    else if(rx_state == GET_DATA)
-        bit_counter <= bit_counter + bit_delay_done;
+    // always_ff@(posedge i_clk or negedge i_nrst)
+    // if(!i_nrst)
+    //     bit_counter <= '0;
+    // else if(rx_state == GET_DATA)
+    //     bit_counter <= bit_counter + bit_delay_done;
 
     /* ------------------------------------------------------------------------------------------------------------ */
 
@@ -190,7 +193,7 @@ module uart_rx
             /* ------------------------------ */
 
             GET_DATA, GET_PARITY:  begin
-                bit_delay_counter(i_bit_length);
+                bit_delay_process(i_bit_length);
             end
 
             /* ------------------------------ */
@@ -237,7 +240,7 @@ module uart_rx
     else begin
         if(rx_state == START)
             o_rx_word               <= '0;
-        else
+        else if(bit_delay_done)
             o_rx_word[bit_counter]  <= i_rx;
     end
 

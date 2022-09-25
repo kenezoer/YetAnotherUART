@@ -81,6 +81,7 @@ package uart_pkg;
 
         typedef struct packed {
             // todo
+            logic   [31:0]  tmp;
         } uart_control_regs_t;
 
     /* ------------------------------------------------------------------------------ */
@@ -140,15 +141,15 @@ package uart_pkg;
 
     localparam      DFIFO_DEPTH             = 8;                                        //| Downstream FIFO depth
     localparam      DFIFO_USED_WIDTH        = $clog2(DFIFO_DEPTH);
-    localparam      DFIFO_WIDTH             = 8
+    localparam      DFIFO_WIDTH             = 8;
     
     localparam      UFIFO_DEPTH             = 8;                                        //| Upstream FIFO depth
     localparam      UFIFO_USED_WIDTH        = $clog2(UFIFO_DEPTH);
-    localparam      UFIFO_WIDTH             = 8
+    localparam      UFIFO_WIDTH             = 8;
 
-    localparam      KENEZOER_BAD_PARAM      = "[PARAM ERROR] Bad parameter value!";
-    localparam      KENEZOER_ERROR          = "[ERROR] An error occured! Module: ";
-    localparam      KENEZOER_WARNING        = "[ERROR] A warning occured! Module: ";
+    string          KENEZOER_BAD_PARAM      = "[PARAM ERROR] Bad parameter value!";
+    string          KENEZOER_ERROR          = "[ERROR] An error occured! Module: ";
+    string          KENEZOER_WARNING        = "[ERROR] A warning occured! Module: ";
 
     localparam      IRQ_EVENTS_NUM          = 9;
     localparam      IRQ_TX_DONE             = 0,

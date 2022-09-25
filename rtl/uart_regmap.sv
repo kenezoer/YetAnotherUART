@@ -53,15 +53,17 @@ module uart_regmap
     input                                       i_rx_status,
     input                                       i_ufifo_full,
     input                                       i_ufifo_empty,
-    input           [UFIFO_DEPTH_WIDTH-1:0]     i_ufifo_used,
+    input           [UFIFO_USED_WIDTH  :0]      i_ufifo_used,
     input                                       i_tx_status,
     input                                       i_dfifo_full,
     input                                       i_dfifo_empty,
-    input           [DFIFO_DEPTH_WIDTH-1:0]     i_dfifo_used,
-    input           [UFIFO_DATA_WIDTH-1:0]      i_ufifo_output,
+    input           [DFIFO_USED_WIDTH  :0]      i_dfifo_used,
+    input           [UFIFO_WIDTH     -1:0]      i_ufifo_output,
+
+    input           [IRQ_EVENTS_NUM  -1:0]      i_irq_stats,
 
     //| Control Signals
-    output  logic   [DFIFO_DATA_WIDTH-1:0]      o_dfifo_input,
+    output  logic   [DFIFO_WIDTH     -1:0]      o_dfifo_input,
     output  logic                               o_dfifo_write_req,
     output  logic                               o_ufifo_read_req,
 
@@ -131,9 +133,9 @@ module uart_regmap
         o_apb_prdata        <= '0;
     else begin
         if(rd_en && !flag_error)
-            o_apb_pready    <= REGMAP_OUT[apb_paddr*8-:APB_BYTES*8];
+            o_apb_prdata    <= REGMAP_OUT[apb_paddr*8-:APB_BYTES*8];
         else
-            o_apb_pready    <= '0;
+            o_apb_prdata    <= '0;
     end
 
     /* ------------------------------------------------------------- */

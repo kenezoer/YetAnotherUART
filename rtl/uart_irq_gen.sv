@@ -61,7 +61,7 @@ module uart_irq_gen
 
     always_ff@(posedge i_clk or negedge i_nrst)
     if(!i_nrst)
-        o_irq_bust      <= '0;
+        o_irq_bus       <= '0;
     else for(int i = 0; i < EVENTS_NUM; i++) begin
 
         if(i_events_mask[i])

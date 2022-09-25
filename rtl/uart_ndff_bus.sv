@@ -24,15 +24,15 @@
 `ifndef     __KENEZOER_UART_NDFF_DEFINED__
 `define     __KENEZOER_UART_NDFF_DEFINED__
 
-module uart_ndff_bus#(
+module uart_ndff_bus #(
     parameter                           CDC_STAGES      = 2,
-    parameter                           BUS_WIDTH       = 32,
+    parameter                           BUS_WIDTH       = 32
 )(
     input                               i_clk,
     input                               i_nrst,
 
     input           [BUS_WIDTH-1:0]     i_data_in,
-    output          [BUS_WIDTH-1:0]     o_data_out
+    output  logic   [BUS_WIDTH-1:0]     o_data_out
 );
 
     /* --------------------------------------------------------------------------------------------------------- */
@@ -47,7 +47,6 @@ module uart_ndff_bus#(
 
     always_comb o_data_out  = cdc_bus[CDC_STAGES-1];
     
-endmodule : uart_rx
-
+endmodule : uart_ndff_bus
 
 `endif    /*__KENEZOER_UART_NDFF_DEFINED__*/

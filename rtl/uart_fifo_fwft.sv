@@ -60,6 +60,14 @@ module uart_fifo_fwft
     output  logic                       o_parity_error
 );
 
+    logic                               will_update_dout;
+    logic                               will_update_middle;
+    logic                               middle_valid;
+    logic   [FIFO_DW-1:0]               middle_dout;
+    logic                               middle_parity_error;
+    logic                               std_fifo_valid;
+    logic   [1:0]                       fwft_used;
+
     /* -------------------------------------------------------------------------------------------------- */
 
     logic                               std_read_req;

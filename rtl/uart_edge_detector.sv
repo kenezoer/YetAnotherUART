@@ -21,8 +21,8 @@
  */
 
 
-`ifndef     __KENEZOER_UART_REGMAP_DEFINED__
-`define     __KENEZOER_UART_REGMAP_DEFINED__
+`ifndef     __KENEZOER_UART_EDGE_DETECTOR_DEFINED__
+`define     __KENEZOER_UART_EDGE_DETECTOR_DEFINED__
 
 module uart_edge_detector#(
     parameter                               BUS_WIDTH   = 32
@@ -32,9 +32,9 @@ module uart_edge_detector#(
 
     input           [BUS_WIDTH-1:0]         i_data,
 
-    output          [BUS_WIDTH-1:0]         o_posedge,
-    output          [BUS_WIDTH-1:0]         o_negedge,
-    output          [BUS_WIDTH-1:0]         o_both_edges
+    output  logic   [BUS_WIDTH-1:0]         o_posedge,
+    output  logic   [BUS_WIDTH-1:0]         o_negedge,
+    output  logic   [BUS_WIDTH-1:0]         o_both_edges
 
 );
 
@@ -71,3 +71,5 @@ module uart_edge_detector#(
         o_both_edges[i]     <= delayed_data[i] ^ i_data[i];
 
 endmodule : uart_edge_detector
+
+`endif          /* __KENEZOER_UART_EDGE_DETECTOR_DEFINED__ */

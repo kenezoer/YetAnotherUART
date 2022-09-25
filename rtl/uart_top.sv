@@ -60,12 +60,24 @@ module uart_top
 );
 
 
-    /* ---------------------------------------- Internal Signals ----------------------------------------- */
+    /* ---------------------------------------- Internal Signals ------------------------------------------ */
 
     logic                                       rx_status;
     logic                                       tx_status;
     logic                                       cts_sync;
     logic                                       rx_sync;
+    uart_regmap_t                               REGMAP;
+
+    /* ---------------------------------------- Receiver Signals ------------------------------------------ */
+
+    logic                                       rx_bad_frame;
+    logic                                       rx_parity_error;
+    logic                                       rx_done;
+
+    /* ---------------------------------------- Receiver Signals ------------------------------------------ */
+
+    logic                                       tx_done;
+    
 
     /* --------------------------------------- CDC Synchronization ---------------------------------------- */
 
@@ -83,10 +95,10 @@ module uart_top
 
     logic                                       ufifo_read_req;
     logic                                       ufifo_write_req;
-    logic   [FIFO_WIDTH-1:0]                    ufifo_data_in;
-    logic   [FIFO_WIDTH-1:0]                    ufifo_data_out;
-    logic   [FIFO_USED_WIDTH:0]                 ufifo_free;
-    logic   [FIFO_USED_WIDTH:0]                 ufifo_used;
+    logic   [UFIFO_WIDTH-1:0]                   ufifo_data_in;
+    logic   [UFIFO_WIDTH-1:0]                   ufifo_data_out;
+    logic   [UFIFO_USED_WIDTH:0]                ufifo_free;
+    logic   [UFIFO_USED_WIDTH:0]                ufifo_used;
     logic                                       ufifo_valid;
     logic                                       ufifo_full;
     logic                                       ufifo_almfull;
@@ -96,7 +108,6 @@ module uart_top
     logic                                       ufifo_underflow;
     logic                                       ufifo_parity_error;
 
-    always_comb ufifo_read_req  = '0; // todo
     always_comb ufifo_write_req = '0; // todo
     always_comb ufifo_data_in   = '0; // todo
 
@@ -130,10 +141,10 @@ module uart_top
 
     logic                                       dfifo_read_req;
     logic                                       dfifo_write_req;
-    logic   [FIFO_WIDTH-1:0]                    dfifo_data_in;
-    logic   [FIFO_WIDTH-1:0]                    dfifo_data_out;
-    logic   [FIFO_USED_WIDTH:0]                 dfifo_free;
-    logic   [FIFO_USED_WIDTH:0]                 dfifo_used;
+    logic   [DFIFO_WIDTH-1:0]                   dfifo_data_in;
+    logic   [DFIFO_WIDTH-1:0]                   dfifo_data_out;
+    logic   [DFIFO_USED_WIDTH:0]                dfifo_free;
+    logic   [DFIFO_USED_WIDTH:0]                dfifo_used;
     logic                                       dfifo_valid;
     logic                                       dfifo_full;
     logic                                       dfifo_almfull;
@@ -144,8 +155,6 @@ module uart_top
     logic                                       dfifo_parity_error;
 
     always_comb dfifo_read_req  = '0; // todo
-    always_comb dfifo_write_req = '0; // todo
-    always_comb dfifo_data_in   = '0; // todo
 
     uart_fifo_fwft #(
 
@@ -153,7 +162,7 @@ module uart_top
         .FIFO_AW                ( UFIFO_USED_WIDTH          ),
         .FIFO_DW                ( UFIFO_WIDTH               )
 
-    ) upstream_fifo_inst (
+    ) downstream_fifo_inst (
 
         .i_clk                  ( i_apb_pclk                ),
         .i_nrst                 ( i_apb_presetn             ),
@@ -274,16 +283,16 @@ module uart_top
         .i_ufifo_full           ( ufifo_full                ),
         .i_ufifo_empty          ( ufifo_empty               ),
         .i_ufifo_used           ( ufifo_used                ),
-        .i_ufifo_output         ( ufifo_output              ),
+        .i_ufifo_output         ( ufifo_data_out            ),
         
         .i_dfifo_full           ( dfifo_full                ),
         .i_dfifo_empty          ( dfifo_empty               ),
         .i_dfifo_used           ( dfifo_used                ),
 
-        .i_irq_stats            ( irq_events_stats_ext      ),
+        .i_irq_stats            ( irq_events_stats          ),
 
     //| Control Signals
-        .o_dfifo_input          ( dfifo_input               ),
+        .o_dfifo_input          ( dfifo_data_in             ),
         .o_dfifo_write_req      ( dfifo_write_req           ),
         .o_ufifo_read_req       ( ufifo_read_req            ),
 

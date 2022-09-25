@@ -55,12 +55,12 @@ module uart_fifo
 );
 
     localparam  DW          = FIFO_DW + FIFO_PARITY_ENABLE;     //| Summary width of FIFO word
-    localparam  FIFO_DEPTH  = 2 ** AW;
+    localparam  FIFO_DEPTH  = 2 ** FIFO_AW;
 
     //| Check correctness of parameter values
     generate
-        if(DW < 1) $error("%s: %m : DW must be > 0. \n", KENEZOER_BAD_PARAM);
-        if(AW < 1) $error("%s: %m : AW must be > 0. \n", KENEZOER_BAD_PARAM);
+        if(FIFO_DW < 1) $error("%s: %m : DW must be > 0. \n", KENEZOER_BAD_PARAM);
+        if(FIFO_AW < 1) $error("%s: %m : AW must be > 0. \n", KENEZOER_BAD_PARAM);
     endgenerate
 
     //|---------------------------
@@ -88,8 +88,8 @@ module uart_fifo
         o_overflow  <= '0;
         o_underflow <= '0;
     end else begin
-        o_overflow  <= i_write_req && o_full;
-        o_underflow <= i_read_req  && o_empty;
+        o_overflow  <= i_wr_req && o_full;
+        o_underflow <= i_rd_req && o_empty;
     end
 
     always_ff@(posedge i_clk or negedge i_nrst)
@@ -143,9 +143,9 @@ module uart_fifo
 
     always_comb begin
         if(FIFO_PARITY_ENABLE)
-            data_packet_in  = {^i_data_in, data_in};
+            data_packet_in  = {^i_data_in, i_data_in};
         else
-            data_packet_in  = data_in;
+            data_packet_in  = i_data_in;
     end
 
     always_comb o_parity_error  = (FIFO_PARITY_ENABLE) ? ^data_packet_out[DW-2:0] ^ data_packet_out[DW-1] : '0;
@@ -160,7 +160,7 @@ module uart_fifo
     else if(valid_write)
         memory_array[write_ptr] <= data_packet_in;
 
-    always_ff@(posedeg i_clk or negedge i_nrst)
+    always_ff@(posedge i_clk or negedge i_nrst)
     if(!i_nrst)
         data_packet_out     <= '0;
     else if(valid_read)
@@ -175,7 +175,7 @@ module uart_fifo
     property x_propagation_output;
         @(posedge i_clk)
         disable iff(!i_nrst)
-        (valid_read) |-> ##1 !($isunknown(fifo_read_do));
+        (valid_read) |-> ##1 !($isunknown(data_packet_out));
     endproperty
 
     property underflow_assrt;
