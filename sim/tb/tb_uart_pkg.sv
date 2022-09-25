@@ -29,43 +29,6 @@ package tb_uart_pkg;
     localparam  APB_BUS_AW  = 32;
     localparam  APB_BUS_DW  = 32;
 
-    /* ------------------------------ */
-
-    task apb_read(
-        input           [APB_BUS_AW - 1 : 0]    addr,
-        output  logic   [APB_BUS_DW - 1 : 0]    data
-    );
-
-
-    endtask : apb_read
-
-    /* ------------------------------ */
-
-    task apb_write(
-        input   [APB_BUS_AW - 1 : 0]    addr,
-        input   [APB_BUS_DW - 1 : 0]    data  
-    );
-
-
-    endtask : apb_write
-
-    /* ------------------------------ */
-
-    task    SendChar(
-        input   [7:0]   char
-    );
-
-
-    endtask : SendChar
-
-    /* ------------------------------ */
-
-    task    GetChar();
-
-    endtask : GetChar
-
-    /* ------------------------------ */
-
 endpackage : tb_uart_pkg
 
 `endif       /* __TB_UART_PKG_DEFINED__ */

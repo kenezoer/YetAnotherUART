@@ -31,6 +31,10 @@ module tb_uart;
     logic       clk     = '0;
     logic       rstn    = '0;
 
+    always#10ns clk     = ~clk;
+
+    initial @(posedge clk) 
+                rstn    = '1;
 
     /* -------------------------------------------------- */
 
@@ -49,6 +53,20 @@ module tb_uart;
         APB.PWRITE  = '0;
         APB.PSEL    = '0;
         APB.PENABLE = '0;
+    end
+
+    /* -------------------------------------------------- */
+
+    `include "tasks.sv"
+
+    /* -------------------------------------------------- */
+
+    initial begin : tests
+        `include "tests/regmap_test.sv"     //| Register map test
+
+
+        //| Simulation Finish
+        $finish;    
     end
 
     /* -------------------------------------------------- */
