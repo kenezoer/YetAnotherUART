@@ -163,6 +163,7 @@ module uart_fifo_fwft
     always_comb o_almost_full   = (o_used >= (FIFO_DEPTH_FWFT - 1'b1));
     always_comb o_full          = std_full;
     always_comb o_almost_empty  = (o_used <= 'd1);
+    always_comb o_free          = FIFO_DEPTH_FWFT - o_used;
     
     /* -------------------------------------------------------------------------------------------------- */
     
@@ -196,8 +197,8 @@ module uart_fifo_fwft
         .o_used                     ( std_used              ),
         .o_valid                    (  /* not used */       ),
         .o_full                     ( std_full              ),
-        .o_almost_full              ( std_empty             ),
-        .o_empty                    (  /* not used */       ),
+        .o_almost_full              (  /* not used */       ),
+        .o_empty                    ( std_empty             ),
         .o_almost_empty             (  /* not used */       ),
         .o_overflow                 (  /* not used */       ),
         .o_underflow                (  /* not used */       ),

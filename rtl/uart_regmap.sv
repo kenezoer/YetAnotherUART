@@ -87,6 +87,8 @@ module uart_regmap
     //|-----------------------------
     logic                                   ro_write_error;             //| Read Only regs write request occured
     logic                                   miss_address_error;         //| Requested reg doesn't exists
+    logic                                   wr_en_event;                //| Write Enable Event
+    logic                                   rd_en_event;                //| Read  Enable Event
     logic                                   wr_en;                      //| Write Enable
     logic                                   rd_en;                      //| Read  Enable
     logic                                   flag_error;                 //| Error flag for internal use
@@ -98,13 +100,15 @@ module uart_regmap
 
     /* ------------------------------------------------------------- */
 
-    always_comb wr_en   = i_apb_psel && i_apb_penable &&  i_apb_pwrite; //| Write Enable
-    always_comb rd_en   = i_apb_psel && i_apb_penable && !i_apb_pwrite; //| Read  Enable
+    always_comb wr_en_event     = i_apb_psel  && i_apb_penable &&  i_apb_pwrite; //| Write Enable
+    always_comb rd_en_event     = i_apb_psel  && i_apb_penable && !i_apb_pwrite; //| Read  Enable
+    always_comb wr_en           = wr_en_event && o_apb_pready;
+    always_comb rd_en           = rd_en_event;
 
     /* ------------------------------------------------------------- */
 
-    always_comb ro_write_error      = (apb_paddr > ALLOWED_RW_ADDR_RANGE) &&  wr_en;
-    always_comb miss_address_error  = (apb_paddr > ALLOWED_ADDR_RANGE)    && (wr_en || rd_en);
+    always_comb ro_write_error      = (apb_paddr > ALLOWED_RW_ADDR_RANGE) &&  wr_en_event;
+    always_comb miss_address_error  = (apb_paddr > ALLOWED_ADDR_RANGE)    && (wr_en_event || rd_en_event);
 
     /* ------------------------------------------------------------- */
 
@@ -112,7 +116,9 @@ module uart_regmap
     if(!i_apb_presetn)
         o_apb_pready        <= '0;
     else begin
-        if(wr_en || rd_en)
+        if(o_apb_pready)
+            o_apb_pready    <= '0;
+        else if(wr_en_event || rd_en_event)
             o_apb_pready    <= '1;
         else
             o_apb_pready    <= '0;
@@ -133,51 +139,52 @@ module uart_regmap
         o_apb_prdata        <= '0;
     else begin
         if(rd_en && !flag_error)
-            o_apb_prdata    <= REGMAP_OUT[apb_paddr*8-:APB_BYTES*8];
-        else
-            o_apb_prdata    <= '0;
+            o_apb_prdata    <= REGMAP_OUT[apb_paddr*8+:APB_BYTES*8];
     end
 
     /* ------------------------------------------------------------- */
 
     always_ff@(posedge i_apb_pclk or negedge i_apb_presetn)
     if(!i_apb_presetn) begin
-        REGMAP_OUT          <= '0;
+        REGMAP_OUT.RW                   <= '0;
+        REGMAP_OUT.RW.UART_BIT_LENGTH   <= 'd1000;
     end else begin
 
         if(wr_en && !flag_error) begin
-            REGMAP_OUT[apb_paddr*8-:APB_BYTES*8]  <= i_apb_pwdata;
+            REGMAP_OUT.RW[apb_paddr*8+:APB_BYTES*8]  <= i_apb_pwdata;
         end
-
-        /* -------------- Hardware Info ---------------------------- */
-        REGMAP_OUT.RO.HWINFO.parity_check_en    <= FIFO_PARITY_CHECK_EN;
-        REGMAP_OUT.RO.HWINFO.reserved           <= '0;
-        REGMAP_OUT.RO.HWINFO.ufifo_depth        <= UFIFO_DEPTH;
-        REGMAP_OUT.RO.HWINFO.dfifo_depth        <= DFIFO_DEPTH;
-        REGMAP_OUT.RO.HWINFO.ip_version[7:4]    <= IP_VERSION_MAJOR;
-        REGMAP_OUT.RO.HWINFO.ip_version[3:0]    <= IP_VERSION_MINOR;
-
-        /* ---------------- Stats Info ----------------------------- */
-        REGMAP_OUT.RO.STATS.reserved_2          <= '0;
-        REGMAP_OUT.RO.STATS.rx_status           <= i_rx_status;
-        REGMAP_OUT.RO.STATS.ufifo_full          <= i_ufifo_full;
-        REGMAP_OUT.RO.STATS.ufifo_empty         <= i_ufifo_empty;
-        REGMAP_OUT.RO.STATS.ufifo_used          <= i_ufifo_used;
-        REGMAP_OUT.RO.STATS.reserved_1          <= '0;
-        REGMAP_OUT.RO.STATS.tx_status           <= i_tx_status;
-        REGMAP_OUT.RO.STATS.dfifo_full          <= i_dfifo_full;
-        REGMAP_OUT.RO.STATS.dfifo_empty         <= i_dfifo_empty;
-        REGMAP_OUT.RO.STATS.dfifo_used          <= i_dfifo_used;
-
-        /* ------------ Upstream FIFO Output ----------------------- */
-        REGMAP_OUT.RO.UFIFO.reserved            <= '0;
-        REGMAP_OUT.RO.UFIFO.ufifo_output        <= i_ufifo_output;
 
         /* ------------ IRQ Events auto-clear ---------------------- */
         if(|REGMAP_OUT.RW.IRQ_EVENT)
             REGMAP_OUT.RW.IRQ_EVENT             <= '0;
 
     end
+
+
+
+        /* -------------- Hardware Info ---------------------------- */
+        always_comb REGMAP_OUT.RO.HWINFO.parity_check_en    = FIFO_PARITY_CHECK_EN;
+        always_comb REGMAP_OUT.RO.HWINFO.reserved           = '0;
+        always_comb REGMAP_OUT.RO.HWINFO.ufifo_depth        = UFIFO_DEPTH;
+        always_comb REGMAP_OUT.RO.HWINFO.dfifo_depth        = DFIFO_DEPTH;
+        always_comb REGMAP_OUT.RO.HWINFO.ip_version[7:4]    = IP_VERSION_MAJOR;
+        always_comb REGMAP_OUT.RO.HWINFO.ip_version[3:0]    = IP_VERSION_MINOR;
+
+        /* ---------------- Stats Info ----------------------------- */
+        always_comb REGMAP_OUT.RO.STATS.reserved_2          = '0;
+        always_comb REGMAP_OUT.RO.STATS.rx_status           = i_rx_status;
+        always_comb REGMAP_OUT.RO.STATS.ufifo_full          = i_ufifo_full;
+        always_comb REGMAP_OUT.RO.STATS.ufifo_empty         = i_ufifo_empty;
+        always_comb REGMAP_OUT.RO.STATS.ufifo_used          = i_ufifo_used;
+        always_comb REGMAP_OUT.RO.STATS.reserved_1          = '0;
+        always_comb REGMAP_OUT.RO.STATS.tx_status           = i_tx_status;
+        always_comb REGMAP_OUT.RO.STATS.dfifo_full          = i_dfifo_full;
+        always_comb REGMAP_OUT.RO.STATS.dfifo_empty         = i_dfifo_empty;
+        always_comb REGMAP_OUT.RO.STATS.dfifo_used          = i_dfifo_used;
+
+        /* ------------ Upstream FIFO Output ----------------------- */
+        always_comb REGMAP_OUT.RO.UFIFO.reserved            = '0;
+        always_comb REGMAP_OUT.RO.UFIFO.ufifo_output        = i_ufifo_output;
 
     /* ------------------------------------------------------------- */
 
@@ -196,7 +203,6 @@ module uart_regmap
     else
         o_dfifo_write_req           <=  !flag_error                     && 
                                          wr_en                          && 
-                                         o_apb_pready                   && 
                                         (apb_paddr == DFIFO_OFFSET)   ;
 
 

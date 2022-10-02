@@ -31,6 +31,11 @@ module tb_uart;
     logic       clk     = '0;
     logic       rstn    = '0;
 
+    logic       tx, rts;
+
+    logic   [APB_BUS_DW-1:0]    write_data;
+    logic   [APB_BUS_DW-1:0]    read_data;
+
     always#10ns clk     = ~clk;
 
     initial @(posedge clk) 
@@ -62,11 +67,14 @@ module tb_uart;
     /* -------------------------------------------------- */
 
     initial begin : tests
+
+        /* --------------------------*/
         `include "tests/regmap_test.sv"     //| Register map test
+        `include "tests/rx_tx_test.sv"      //| RX/TX Test
 
+        /* --------------------------*/
+        $finish;
 
-        //| Simulation Finish
-        $finish;    
     end
 
     /* -------------------------------------------------- */
@@ -98,7 +106,7 @@ module tb_uart;
         .i_rx                       ( tx            ),
 
         .o_rts                      ( rts           ),
-        .i_cts                      ( cts           ),
+        .i_cts                      ( rts           ),
 
     //| Misc
         .o_irq                      ( uart_irq      ));

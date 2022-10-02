@@ -31,18 +31,20 @@ package uart_pkg;
 
         typedef struct packed {
 
-        /* [31:8]   */  logic   [23:0]  reserved;           /* [Read Only] reserved fields                  */
-        /* [7]      */  logic           uart_bad_frame;     /* [Read Only] UART bad frame given             */
-        /* [6]      */  logic           uart_parity_err;    /* [Read Only] UART parity error (in frame)     */
+        /* [31:10]  */  logic   [23:0]  reserved;           /* [Read Only] reserved fields                  */
+        /* [9]      */  logic           uart_bad_frame;     /* [Read Only] UART bad frame given             */
+        /* [8]      */  logic           uart_parity_err;    /* [Read Only] UART parity error (in frame)     */
         
-        /* [5]      */  logic           ufifo_full;         /* [Read Only] Upstream FIFO Full               */
-        /* [4]      */  logic           ufifo_error;        /* [Read Only] Upstream FIFO parity error       */
+        /* [7]      */  logic           ufifo_full;         /* [Read Only] Upstream FIFO Full               */
+        /* [6]      */  logic           ufifo_error;        /* [Read Only] Upstream FIFO parity error       */
 
-        /* [3]      */  logic           dfifo_empty;        /* [Read Only] Downstream FIFO Empty            */
-        /* [2]      */  logic           dfifo_error;        /* [Read Only] Downstream FIFO parity error     */
+        /* [5]      */  logic           dfifo_empty;        /* [Read Only] Downstream FIFO Empty            */
+        /* [4]      */  logic           dfifo_error;        /* [Read Only] Downstream FIFO parity error     */
 
-        /* [1]      */  logic           rx_done;            /* [Read Only] Receiving done (1 word)          */
-        /* [0]      */  logic           tx_done;            /* [Read Only] Tranceiving done (1 word)        */
+        /* [3]      */  logic           rx_done;            /* [Read Only] Receiving done (1 word)          */
+        /* [2]      */  logic           rx_started;         /* [Read Only] Receiving started (1 word)       */
+        /* [1]      */  logic           tx_done;            /* [Read Only] Tranceiving done (1 word)        */
+        /* [0]      */  logic           tx_started;         /* [Read Only] Tranceiving started (1 word)     */
 
         } uart_irq_regs_t;
 
@@ -80,8 +82,12 @@ package uart_pkg;
                             /* CONTROL REGISTERS */
 
         typedef struct packed {
-            // todo
-            logic   [31:0]  tmp;
+        /* [31:6]   */  logic   [25:0]  reserved;
+        /* [5]      */  logic           ufifo_rst;
+        /* [4]      */  logic           dfifo_rst;
+        /* [3]      */  logic           msb_first;
+        /* [2]      */  logic           hw_flow_ctrl_en;
+        /* [1:0]    */  logic   [1:0]   stop_bit_mode;
         } uart_control_regs_t;
 
     /* ------------------------------------------------------------------------------ */
@@ -104,12 +110,12 @@ package uart_pkg;
                             /* RW REGISTERS */
         
         typedef struct packed {
-            // todo
-            uart_irq_regs_t         IRQ_EVENT;              /* [4 dword] */
-            uart_irq_regs_t         IRQ_MASK;               /* [3 dword] */
-            uart_irq_regs_t         IRQ_EN;                 /* [2 dword] */
-            uart_control_regs_t     CTRL;                   /* [1 dword] */  
-            uart_dfifo_t            DFIFO;                  /* [0 dword] */  
+            uart_irq_regs_t                 IRQ_EVENT;          /* [4 dword] */
+            uart_irq_regs_t                 IRQ_MASK;           /* [3 dword] */
+            uart_irq_regs_t                 IRQ_EN;             /* [2 dword] */
+            logic               [31:0]      UART_BIT_LENGTH;    /* [2 dword] */
+            uart_control_regs_t             CTRL;               /* [1 dword] */  
+            uart_dfifo_t                    DFIFO;              /* [0 dword] */  
         } uart_rw_regs_t;
 
     /* ------------------------------------------------------------------------------ */
@@ -151,15 +157,18 @@ package uart_pkg;
     string          KENEZOER_ERROR          = "[ERROR] An error occured! Module: ";
     string          KENEZOER_WARNING        = "[ERROR] A warning occured! Module: ";
 
-    localparam      IRQ_EVENTS_NUM          = 9;
-    localparam      IRQ_TX_DONE             = 0,
-                    IRQ_RX_DONE             = 1,
-                    IRQ_DFIFO_ERROR         = 2,
-                    IRQ_DFIFO_EMPTY         = 3,
-                    IRQ_UFIFO_ERROR         = 4,
-                    IRQ_UFIFO_FULL          = 5,
-                    IRQ_UART_PARITY_ERR     = 6,
-                    IRQ_UART_BAD_FRAME      = 7;
+    localparam      IRQ_EVENTS_NUM          = 10;
+
+    localparam      IRQ_TX_STARTED          = 0,
+                    IRQ_TX_DONE             = 1,
+                    IRQ_RX_STARTED          = 2,
+                    IRQ_RX_DONE             = 3,
+                    IRQ_DFIFO_ERROR         = 4,
+                    IRQ_DFIFO_EMPTY         = 5,
+                    IRQ_UFIFO_ERROR         = 6,
+                    IRQ_UFIFO_FULL          = 7,
+                    IRQ_UART_PARITY_ERR     = 8,
+                    IRQ_UART_BAD_FRAME      = 9;
 
 endpackage : uart_pkg
 

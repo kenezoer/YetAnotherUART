@@ -34,7 +34,6 @@ module uart_rx
 
     input           [31:0]          i_bit_length,
     input                           i_hw_flow_control_enable,
-    input                           i_rx,
     input                           i_msb_first,
     input           [1:0]           i_stop_bit_mode,
 
@@ -42,7 +41,10 @@ module uart_rx
     output  logic                   o_rx_started,
     output  logic                   o_rx_frame_error,
     output  logic                   o_rx_parity_error,
-    output  logic   [8:0]           o_rx_word                   //| 8 bits + parity bit
+    output  logic   [8:0]           o_rx_word,                  //| 8 bits + parity bit
+
+    input                           i_rx,
+    output  logic                   o_rts
 );
 
     /* --------------------------------------------------------------------------------------------------------- */
