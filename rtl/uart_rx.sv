@@ -36,6 +36,7 @@ module uart_rx
     input                           i_hw_flow_control_enable,
     input                           i_msb_first,
     input           [1:0]           i_stop_bit_mode,
+    input                           i_fifo_full,
 
     output  logic                   o_rx_done,
     output  logic                   o_rx_started,
@@ -54,6 +55,7 @@ module uart_rx
     logic                           bit_delay_done;
     logic   [31:0]                  bit_delay_counter;
     logic                           stop_2nd_bit_presents;
+    logic                           rts;
 
     /* --------------------------------------- FSM ------------------------------------------------------------- */
 
@@ -221,6 +223,7 @@ module uart_rx
     always_comb o_rx_done           = (rx_state == FINISH);
     always_comb o_rx_started        = (rx_state == START);
     always_comb o_rx_parity_error   = (rx_state == FINISH) && (^o_rx_word[7:0] != o_rx_word[8]);
+    always_comb o_rts               = (rx_state == IDLE)   && (i_hw_flow_control_enable ? ~i_fifo_full : '1);
 
 
     always_ff@(posedge i_clk or negedge i_nrst)

@@ -69,7 +69,7 @@ module tb_uart;
     initial begin : tests
 
         /* --------------------------*/
-        `include "tests/regmap_test.sv"     //| Register map test
+        // `include "tests/regmap_test.sv"     //| Register map test
         `include "tests/rx_tx_test.sv"      //| RX/TX Test
 
         /* --------------------------*/

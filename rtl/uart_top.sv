@@ -86,7 +86,8 @@ module uart_top
 
     uart_ndff_bus#(
         .CDC_STAGES                 ( 3                             ),
-        .BUS_WIDTH                  ( 2                             )
+        .BUS_WIDTH                  ( 2                             ),
+        .RESET_VALUE                ( 2'b01                         )
     ) inputs_sync (
         .i_clk                      ( i_apb_pclk                    ),
         .i_nrst                     ( i_apb_presetn                 ),
@@ -96,6 +97,7 @@ module uart_top
 
     /* --------------------------------------- Upstream FIFO INST ----------------------------------------- */
 
+    logic                                       ufifo_resetn;
     logic                                       ufifo_read_req;
     logic                                       ufifo_write_req;
     logic   [UFIFO_WIDTH-1:0]                   ufifo_data_in;
@@ -113,6 +115,12 @@ module uart_top
 
     always_comb ufifo_write_req = rx_done;
 
+    always_ff@(posedge i_apb_pclk or negedge i_apb_presetn)
+    if(!i_apb_presetn)
+        ufifo_resetn    <= '0;
+    else
+        ufifo_resetn    <= ~REGMAP.RW.CTRL.ufifo_rst;
+
     uart_fifo_fwft #(
 
         .FIFO_PARITY_ENABLE         ( FIFO_PARITY_CHECK_EN          ),
@@ -122,7 +130,7 @@ module uart_top
     ) upstream_fifo_inst (
 
         .i_clk                      ( i_apb_pclk                    ),
-        .i_nrst                     ( i_apb_presetn                 ),
+        .i_nrst                     ( ufifo_resetn                  ),
         .i_rd_req                   ( ufifo_read_req                ),
         .i_wr_req                   ( ufifo_write_req               ),
         .i_data_in                  ( ufifo_data_in                 ),
@@ -141,6 +149,7 @@ module uart_top
 
     /* -------------------------------------- Downstream FIFO INST ---------------------------------------- */
 
+    logic                                       dfifo_resetn;
     logic                                       dfifo_read_req;
     logic                                       dfifo_write_req;
     logic   [DFIFO_WIDTH-1:0]                   dfifo_data_in;
@@ -158,6 +167,12 @@ module uart_top
 
     always_comb dfifo_read_req  = tx_ready && ~dfifo_empty;
 
+    always_ff@(posedge i_apb_pclk or negedge i_apb_presetn)
+    if(!i_apb_presetn)
+        dfifo_resetn    <= '0;
+    else
+        dfifo_resetn    <= ~REGMAP.RW.CTRL.dfifo_rst;
+
     uart_fifo_fwft #(
 
         .FIFO_PARITY_ENABLE         ( FIFO_PARITY_CHECK_EN          ),
@@ -167,7 +182,7 @@ module uart_top
     ) downstream_fifo_inst (
 
         .i_clk                      ( i_apb_pclk                    ),
-        .i_nrst                     ( i_apb_presetn                 ),
+        .i_nrst                     ( dfifo_resetn                  ),
         .i_rd_req                   ( dfifo_read_req                ),
         .i_wr_req                   ( dfifo_write_req               ),
         .i_data_in                  ( dfifo_data_in                 ),
@@ -195,6 +210,7 @@ module uart_top
         .i_rx                       ( rx_sync                       ),
         .o_rts                      ( o_rts                         ),
 
+        .i_fifo_full                ( ufifo_full                    ),
         .i_bit_length               ( REGMAP.RW.UART_BIT_LENGTH     ),
         .i_hw_flow_control_enable   ( REGMAP.RW.CTRL.hw_flow_ctrl_en),
         .i_msb_first                ( REGMAP.RW.CTRL.msb_first      ),
@@ -217,7 +233,7 @@ module uart_top
         .i_valid                    ( ~dfifo_empty                  ),
         .o_ready                    ( tx_ready                      ),
 
-        .i_tx                       ( o_tx                          ),
+        .o_tx                       ( o_tx                          ),
         .i_cts                      ( cts_sync                      ),
         .i_hw_flow_control_enable   ( REGMAP.RW.CTRL.hw_flow_ctrl_en),
 

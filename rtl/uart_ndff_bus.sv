@@ -26,7 +26,8 @@
 
 module uart_ndff_bus #(
     parameter                           CDC_STAGES      = 2,
-    parameter                           BUS_WIDTH       = 32
+    parameter                           BUS_WIDTH       = 32,
+    parameter   logic   [BUS_WIDTH-1:0] RESET_VALUE     = '1
 )(
     input                               i_clk,
     input                               i_nrst,
@@ -41,7 +42,7 @@ module uart_ndff_bus #(
 
     always_ff@(posedge i_clk or negedge i_nrst)
     if(!i_nrst)
-        cdc_bus     <= '0;
+        cdc_bus     <= '{default: RESET_VALUE};
     else
         cdc_bus     <= {cdc_bus[CDC_STAGES-2:0], i_data_in};
 
