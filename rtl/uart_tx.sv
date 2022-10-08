@@ -29,31 +29,40 @@ module uart_tx
     import uart_pkg::*;
 //|------------------------------------
 (
-    input                           i_clk,
-    input                           i_nrst,
+    input                                       i_clk,
+    input                                       i_nrst,
 
-    input                           i_valid,
-    output  logic                   o_ready,
+    input                                       i_valid,
+    output  logic                               o_ready,
 
-    output  logic                   o_tx,
-    input                           i_cts,
-    input                           i_hw_flow_control_enable,
+    output  logic                               o_tx,
+    output  logic                               o_tx_status,
 
-    input           [31:0]          i_bit_length,
-    input                           i_msb_first,
-    input           [7:0]           i_data
+    input                                       i_fifo_empty,
+    input                                       i_cts,
+    input                                       i_hw_flow_control_enable,
+    input                                       i_parity_enable,
+    input   stop_bit_mode_t                     i_stop_bit_mode,
+    input                       [1:0]           i_stop_bit_value,
+
+    input                       [31:0]          i_bit_length,
+    input                                       i_msb_first,
+    input                       [8:0]           i_data
 
 );
 
 
     /* ------------------------------------ VARIABLES ---------------------------------------------------------- */
 
-    logic   [3:0]       bit_select;
-    logic               cts;
-    logic   [10:0]      data_packet;
-    logic               period_done;
-    logic   [31:0]      bit_period_buf;
-    logic   [31:0]      bit_period_counter;
+    logic           [3:0]       bit_select;
+    logic                       cts;
+    logic           [7:0]       data_to_send;
+    logic           [11:0]      data_packet;
+    logic                       period_done;
+    logic                       half_period_done;
+    logic           [31:0]      bit_period_buf;
+    logic           [31:0]      bit_period_counter;
+    stop_bit_mode_t             stop_bit_mode;
 
     enum logic [2:0]    {
         IDLE                = 3'd0,
@@ -67,8 +76,9 @@ module uart_tx
 
     /* ---------------------------------- Internal Logic ------------------------------------------------------- */
 
-    always_comb cts     = i_hw_flow_control_enable ? '1 : i_cts;
-    always_comb o_ready = cts && (tx_state == IDLE);
+    always_comb cts         = i_hw_flow_control_enable ? i_cts : '1;
+    always_comb o_ready     = cts && (tx_state == IDLE);
+    always_comb o_tx_status = !(tx_state == IDLE);
 
     /* --------------------------------------- FSM ------------------------------------------------------------- */
 
@@ -110,9 +120,9 @@ module uart_tx
 
             SEND_DATA: begin
 
-                if(period_done && (bit_select >= 4'd8))
-                    tx_state_next   = SEND_PARITY;
-                else
+                if(period_done && (bit_select >= 4'd8)) begin
+                    tx_state_next   = i_parity_enable ? SEND_PARITY : SEND_STOP_BIT;
+                end else
                     tx_state_next   = SEND_DATA;
 
             end
@@ -121,17 +131,65 @@ module uart_tx
 
             SEND_PARITY: begin
 
+                if(period_done)
+                    tx_state_next   = SEND_STOP_BIT;
+                else
+                    tx_state_next   = SEND_PARITY;
+
             end
 
             /* ------------------------------ */
 
             SEND_STOP_BIT: begin
+                
+                if(stop_bit_mode < ONE_AND_HALF_PERIODS) begin
+
+                    if(stop_bit_mode == HALF_PERIOD) begin
+
+                        if(half_period_done)
+                            tx_state_next   = FINISH;
+                        else
+                            tx_state_next   = SEND_STOP_BIT;
+
+                    end else begin 
+
+                        if(period_done)
+                            tx_state_next   = FINISH;
+                        else
+                            tx_state_next   = SEND_STOP_BIT;
+                    end
+
+                end else begin
+
+                    if(period_done)
+                        tx_state_next   = SEND_STOP_BIT_2;
+                    else
+                        tx_state_next   = SEND_STOP_BIT;
+
+                end
+                    
 
             end
 
             /* ------------------------------ */
 
             SEND_STOP_BIT_2: begin
+
+                    if(stop_bit_mode == ONE_AND_HALF_PERIODS) begin
+
+                        if(half_period_done)
+                            tx_state_next   = FINISH;
+                        else
+                            tx_state_next   = SEND_STOP_BIT_2;
+
+                    end else begin 
+
+                        if(period_done)
+                            tx_state_next   = FINISH;
+                        else
+                            tx_state_next   = SEND_STOP_BIT_2;
+
+                    end
 
             end
 
@@ -146,7 +204,7 @@ module uart_tx
     always_ff@(posedge i_clk or negedge i_nrst)
     if(!i_nrst)
         bit_period_buf  <= '0;
-    else if(i_valid && !o_ready)
+    else if(tx_state inside {IDLE, FINISH})
         bit_period_buf  <= i_bit_length;
 
         /* ----------------------- */
@@ -165,15 +223,38 @@ module uart_tx
         
     end
 
-    always_comb period_done = (bit_period_counter >= bit_period_buf);
+    always_comb period_done         = (bit_period_counter >=  bit_period_buf);
+    always_comb half_period_done    = (bit_period_counter >= (bit_period_buf >> 1) );
+
+        /* ----------------------- */
+
+    always_comb begin
+        if(i_msb_first)
+            data_to_send    = {i_data[0], i_data[1], i_data[2], i_data[3], i_data[4], i_data[5], i_data[6], i_data[7]};
+        else
+            data_to_send    =  i_data;
+    end
+
+    always_ff@(posedge i_clk or negedge i_nrst)
+    if(!i_nrst)
+        data_packet <= '0;
+    else if(tx_state inside {IDLE, FINISH}) begin
+
+        data_packet[0]      <= '0;
+        data_packet[8:1]    <= data_to_send;
+        data_packet[9]      <= i_parity_enable ? i_data[8] : '0;
+        data_packet[11:10]  <= i_stop_bit_value;
+
+    end
 
         /* ----------------------- */
 
     always_ff@(posedge i_clk or negedge i_nrst)
     if(!i_nrst)
-        data_packet <= '0;
-    else if(i_valid && !o_ready)
-        data_packet <= {2'b0, i_data, 1'b0};
+        stop_bit_mode   <= HALF_PERIOD;
+    else if(tx_state inside {IDLE, FINISH}) begin
+        stop_bit_mode   <= i_stop_bit_mode;
+    end
 
         /* ----------------------- */
 
@@ -181,10 +262,17 @@ module uart_tx
     if(!i_nrst)
         bit_select  <= '0;
     else begin
-        if(tx_state != IDLE)
-            bit_select  <= bit_select + period_done;
-        else
+        if(tx_state inside {IDLE, FINISH})
             bit_select  <= '0;
+        else
+
+            if((stop_bit_mode == HALF_PERIOD) && tx_state == SEND_STOP_BIT)
+                bit_select  <= bit_select + half_period_done;
+            else if((stop_bit_mode == ONE_AND_HALF_PERIODS) && tx_state == SEND_STOP_BIT_2)
+                bit_select  <= bit_select + half_period_done;
+            else
+                bit_select  <= bit_select + period_done;
+
     end
 
         /* ----------------------- */
@@ -193,10 +281,12 @@ module uart_tx
     if(!i_nrst)
         o_tx    <= '1;
     else begin
-        if(tx_state != IDLE)
-            o_tx    <= data_packet[bit_select];
-        else
+
+        if(tx_state inside {IDLE, FINISH})
             o_tx    <= '1;
+        else
+            o_tx    <= data_packet[bit_select];
+
     end
 
         /* ----------------------- */

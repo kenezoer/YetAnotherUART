@@ -81,13 +81,22 @@ package uart_pkg;
     /* ------------------------------------------------------------------------------ */
                             /* CONTROL REGISTERS */
 
+        typedef enum logic [1:0] {
+            HALF_PERIOD,
+            FULL_PERIOD,
+            ONE_AND_HALF_PERIODS,
+            TWO_PERIODS
+        } stop_bit_mode_t;
+
         typedef struct packed {
-        /* [31:6]   */  logic   [25:0]  reserved;
-        /* [5]      */  logic           ufifo_rst;
-        /* [4]      */  logic           dfifo_rst;
-        /* [3]      */  logic           msb_first;
-        /* [2]      */  logic           hw_flow_ctrl_en;
-        /* [1:0]    */  logic   [1:0]   stop_bit_mode;
+        /* [31:9]   */  logic   [22:0]  reserved;
+        /* [8]      */  logic           send_parity;
+        /* [7]      */  logic           ufifo_rst;
+        /* [6]      */  logic           dfifo_rst;
+        /* [5]      */  logic           msb_first;
+        /* [4]      */  logic           hw_flow_ctrl_en;
+        /* [3:2]    */  logic   [1:0]   stop_bit_value;
+        /* [1:0]    */  stop_bit_mode_t stop_bit_mode;
         } uart_control_regs_t;
 
     /* ------------------------------------------------------------------------------ */

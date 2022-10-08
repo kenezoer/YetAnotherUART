@@ -35,8 +35,9 @@ module uart_rx
     input           [31:0]          i_bit_length,
     input                           i_hw_flow_control_enable,
     input                           i_msb_first,
-    input           [1:0]           i_stop_bit_mode,
-    input                           i_fifo_full,
+    input   stop_bit_mode_t         i_stop_bit_mode,
+    input                           i_parity_enable,
+    input                           i_fifo_almfull,
 
     output  logic                   o_rx_done,
     output  logic                   o_rx_started,
@@ -50,15 +51,6 @@ module uart_rx
 
     /* --------------------------------------------------------------------------------------------------------- */
 
-    logic   [31:0]                  bit_length_counter;
-    logic   [3:0]                   bit_counter;
-    logic                           bit_delay_done;
-    logic   [31:0]                  bit_delay_counter;
-    logic                           stop_2nd_bit_presents;
-    logic                           rts;
-
-    /* --------------------------------------- FSM ------------------------------------------------------------- */
-
     enum logic [2:0]    {
         IDLE                = 3'd0,
         START               = 3'd1,
@@ -68,6 +60,17 @@ module uart_rx
         GET_STOP_BIT_2      = 3'd5,
         FINISH              = 3'd6
     } rx_state, rx_state_next;
+
+    logic                           rts;
+    logic                           period_done;
+    logic                           half_period_done;
+    logic               [31:0]      bit_counter;
+    logic               [31:0]      bit_period_counter;
+    logic               [31:0]      bit_period_buf;
+    logic               [3:0]       bit_select;
+    stop_bit_mode_t                 stop_bit_mode;
+
+    /* --------------------------------------- FSM ------------------------------------------------------------- */
 
     always_ff@(posedge i_clk or negedge i_nrst)
     if(!i_nrst)
@@ -94,7 +97,7 @@ module uart_rx
 
             START: begin
 
-                if(bit_delay_done)
+                if(period_done)
                     rx_state_next   = GET_DATA;
                 else
                     rx_state_next   = START;
@@ -105,7 +108,7 @@ module uart_rx
 
             GET_DATA:  begin
 
-                if(bit_counter >= 4'd7 && bit_delay_done)
+                if(bit_counter >= 4'd7 && period_done)
                     rx_state_next   = GET_PARITY;
                 else
                     rx_state_next   = GET_DATA;
@@ -116,7 +119,7 @@ module uart_rx
 
             GET_PARITY:  begin
 
-                if(bit_delay_done)
+                if(period_done)
                     rx_state_next   = GET_STOP_BIT;
                 else
                     rx_state_next   = GET_PARITY;
@@ -127,11 +130,8 @@ module uart_rx
 
             GET_STOP_BIT:  begin
 
-                if(bit_delay_done) begin
-                    if(stop_2nd_bit_presents)
-                        rx_state_next   = GET_STOP_BIT_2;
-                    else
-                        rx_state_next   = FINISH;
+                if(period_done) begin
+                    rx_state_next       = GET_STOP_BIT_2;
                 end else
                     rx_state_next       = GET_STOP_BIT;
 
@@ -141,7 +141,7 @@ module uart_rx
 
             GET_STOP_BIT_2:  begin
 
-                if(bit_delay_done)
+                if(period_done)
                     rx_state_next   = IDLE;
                 else
                     rx_state_next   = GET_STOP_BIT_2;
@@ -158,72 +158,40 @@ module uart_rx
 
     /* --------------------------------------- RX Logic ----------------------------------------------------------- */
 
-    task    bit_delay_process(
-        input       [31:0]  delay_value
-    );
+    always_ff@(posedge i_clk or negedge i_nrst)
+    if(!i_nrst)
+        bit_period_buf  <= '0;
+    else if(rx_state inside {IDLE, FINISH})
+        bit_period_buf  <= i_bit_length;
 
-        if(bit_delay_counter <= 32'd1)
-            bit_delay_counter   <= delay_value;
+        /* ----------------------- */
+
+    always_ff@(posedge i_clk or negedge i_nrst)
+    if(!i_nrst)
+        bit_period_counter  <= '0;
+    else begin
+
+        if(rx_state inside {IDLE, FINISH})
+            bit_period_counter  <= '0;
+        else if(period_done)
+            bit_period_counter  <= '0;
         else
-            bit_delay_counter   <= bit_counter - 1'b1;
+            bit_period_counter  <= bit_period_counter + 1'b1;
+        
+    end
 
-    endtask : bit_delay_process
+    always_comb period_done         = (bit_period_counter >=  bit_period_buf);
+    always_comb half_period_done    = (bit_period_counter >= (bit_period_buf >> 1) );
 
-
-    always_comb bit_delay_done = (bit_delay_counter == 32'd1);
-
-
-    // always_ff@(posedge i_clk or negedge i_nrst)
-    // if(!i_nrst)
-    //     bit_counter <= '0;
-    // else if(rx_state == GET_DATA)
-    //     bit_counter <= bit_counter + bit_delay_done;
 
     /* ------------------------------------------------------------------------------------------------------------ */
-
-    always_ff@(posedge i_clk or negedge i_nrst) 
-    if(!i_nrst) begin
-        bit_delay_counter   <= '0;
-    end else begin
-
-        case(rx_state)
-
-            /* ------------------------------ */
-
-            default /* IDLE, FINISH */: begin
-                bit_delay_counter   <= '0;
-            end
-
-            /* ------------------------------ */
-
-            GET_DATA, GET_PARITY:  begin
-                bit_delay_process(i_bit_length);
-            end
-
-            /* ------------------------------ */
-
-            GET_STOP_BIT:  begin
-
-            end
-
-            /* ------------------------------ */
-
-            GET_STOP_BIT_2:  begin
-
-            end
-
-            /* ------------------------------ */
-
-        endcase
-
-    end
 
     /* ------------------------------------------------------------------------------------------------------------ */
 
     always_comb o_rx_done           = (rx_state == FINISH);
     always_comb o_rx_started        = (rx_state == START);
     always_comb o_rx_parity_error   = (rx_state == FINISH) && (^o_rx_word[7:0] != o_rx_word[8]);
-    always_comb o_rts               = (rx_state == IDLE)   && (i_hw_flow_control_enable ? ~i_fifo_full : '1);
+    always_comb o_rts               = (rx_state == IDLE)   && (i_hw_flow_control_enable ? ~i_fifo_almfull : '1);
 
 
     always_ff@(posedge i_clk or negedge i_nrst)
@@ -233,9 +201,9 @@ module uart_rx
         if(rx_state inside {IDLE, FINISH, START})
             bit_counter <= i_msb_first ? 4'd8 : '0;
         else if(i_msb_first)
-            bit_counter <= bit_counter  - bit_delay_done;
+            bit_counter <= bit_counter  - period_done;
         else
-            bit_counter <= bit_counter  + bit_delay_done;
+            bit_counter <= bit_counter  + period_done;
     end
 
 
@@ -245,11 +213,39 @@ module uart_rx
     else begin
         if(rx_state == START)
             o_rx_word               <= '0;
-        else if(bit_delay_done)
+        else if(period_done)
             o_rx_word[bit_counter]  <= i_rx;
     end
 
     /* ------------------------------------------------------------------------------------------------------------ */
+
+        /* ----------------------- */
+
+    always_ff@(posedge i_clk or negedge i_nrst)
+    if(!i_nrst)
+        stop_bit_mode   <= HALF_PERIOD;
+    else if(rx_state inside {IDLE, FINISH}) begin
+        stop_bit_mode   <= i_stop_bit_mode;
+    end
+
+        /* ----------------------- */
+
+    always_ff@(posedge i_clk or negedge i_nrst)
+    if(!i_nrst)
+        bit_select  <= '0;
+    else begin
+        if(rx_state inside {IDLE, FINISH})
+            bit_select  <= '0;
+        else
+
+            if((stop_bit_mode == HALF_PERIOD) && rx_state == GET_STOP_BIT)
+                bit_select  <= bit_select + half_period_done;
+            else if((stop_bit_mode == ONE_AND_HALF_PERIODS) && rx_state == GET_STOP_BIT_2)
+                bit_select  <= bit_select + half_period_done;
+            else
+                bit_select  <= bit_select + period_done;
+
+    end
     
 endmodule : uart_rx
 

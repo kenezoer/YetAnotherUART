@@ -210,9 +210,10 @@ module uart_top
         .i_rx                       ( rx_sync                       ),
         .o_rts                      ( o_rts                         ),
 
-        .i_fifo_full                ( ufifo_full                    ),
         .i_bit_length               ( REGMAP.RW.UART_BIT_LENGTH     ),
         .i_hw_flow_control_enable   ( REGMAP.RW.CTRL.hw_flow_ctrl_en),
+        .i_parity_enable            ( REGMAP.RW.CTRL.send_parity    ),
+        .i_fifo_almfull             ( ufifo_almfull                 ),
         .i_msb_first                ( REGMAP.RW.CTRL.msb_first      ),
         .i_stop_bit_mode            ( REGMAP.RW.CTRL.stop_bit_mode  ),
 
@@ -224,14 +225,19 @@ module uart_top
 
     /* ---------------------------------------- Tranceiver INST ------------------------------------------- */
 
-
     uart_tx
     TX (
         .i_clk                      ( i_apb_pclk                    ),
         .i_nrst                     ( i_apb_presetn                 ),
 
-        .i_valid                    ( ~dfifo_empty                  ),
+        .i_valid                    ( dfifo_valid                   ),
         .o_ready                    ( tx_ready                      ),
+        .o_tx_status                ( tx_status                     ),
+
+        .i_parity_enable            ( REGMAP.RW.CTRL.send_parity    ),
+        .i_stop_bit_mode            ( REGMAP.RW.CTRL.stop_bit_mode  ),
+        .i_stop_bit_value           ( REGMAP.RW.CTRL.stop_bit_value ),
+        .i_fifo_empty               ( dfifo_empty                   ),
 
         .o_tx                       ( o_tx                          ),
         .i_cts                      ( cts_sync                      ),
