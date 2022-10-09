@@ -67,7 +67,7 @@ module uart_fifo
     //| Local Variables
     //|---------------------------
 
-    logic   [FIFO_AW-1:0]   [DW-1:0]    memory_array;
+    logic   [(2**FIFO_AW)-1:0] [DW-1:0] memory_array;
     logic                               valid_read,     valid_write;
     logic   [DW-1:0]                    data_packet_in, data_packet_out;
     logic   [FIFO_AW-1:0]               read_ptr,       write_ptr;

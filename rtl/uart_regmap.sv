@@ -89,6 +89,8 @@ module uart_regmap
 
         $display("************************************************");
         $display("*** OpenSource kenezoer's UART SoftIP instance is used: %m");
+        $display("*** URL: https://github.com/kenezoer/YetAnotherUART");
+        $display("************************************************");
         $display("*** Version: v%0d.%0d", IP_VERSION_MAJOR, IP_VERSION_MINOR);
         $display("*** REGMAP Size:  %0d bytes", TOTAL_REGS_BYTES);
         $display("*** APB Bus Size: %0d bytes", APB_BYTES);
@@ -105,6 +107,24 @@ module uart_regmap
         end
 
     end
+
+/*
+    initial begin : additional_regmap_check
+
+        $display(" REGMAP_OUT.RW.IRQ_EVENT size         = %0d bits", $bits(REGMAP_OUT.RW.IRQ_EVENT));
+        $display(" REGMAP_OUT.RW.IRQ_MASK size          = %0d bits", $bits(REGMAP_OUT.RW.IRQ_MASK));
+        $display(" REGMAP_OUT.RW.IRQ_EN size            = %0d bits", $bits(REGMAP_OUT.RW.IRQ_EN));
+        $display(" REGMAP_OUT.RW.UART_BIT_LENGTH size   = %0d bits", $bits(REGMAP_OUT.RW.UART_BIT_LENGTH));
+        $display(" REGMAP_OUT.RW.CTRL size              = %0d bits", $bits(REGMAP_OUT.RW.CTRL));
+        $display(" REGMAP_OUT.RW.DFIFO size             = %0d bits", $bits(REGMAP_OUT.RW.DFIFO));
+
+        $display(" REGMAP_OUT.RO.padding size           = %0d bits", $bits(REGMAP_OUT.RO.padding));
+        $display(" REGMAP_OUT.RO.HWINFO size            = %0d bits", $bits(REGMAP_OUT.RO.HWINFO));
+        $display(" REGMAP_OUT.RO.STATS size             = %0d bits", $bits(REGMAP_OUT.RO.STATS));
+        $display(" REGMAP_OUT.RO.UFIFO size             = %0d bits", $bits(REGMAP_OUT.RO.UFIFO));
+
+    end
+*/
 
     // pragma synthesis_on
     // pragma translate_on
@@ -166,7 +186,7 @@ module uart_regmap
         o_apb_prdata        <= '0;
     else begin
         if(rd_en && !flag_error)
-            o_apb_prdata    <= REGMAP_OUT[apb_paddr*8+:APB_BYTES*8];
+            o_apb_prdata    <= REGMAP_OUT[apb_paddr * 8 +: APB_BYTES * 8];
     end
 
     /* ------------------------------------------------------------- */

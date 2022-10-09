@@ -31,7 +31,7 @@ package uart_pkg;
 
         typedef struct packed {
 
-        /* [31:10]  */  logic   [23:0]  reserved;           /* [Read Only] reserved fields                  */
+        /* [31:10]  */  logic   [21:0]  reserved;           /* [Read Only] reserved fields                  */
         /* [9]      */  logic           uart_bad_frame;     /* [Read Only] UART bad frame given             */
         /* [8]      */  logic           uart_parity_err;    /* [Read Only] UART parity error (in frame)     */
         

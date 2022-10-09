@@ -27,11 +27,14 @@
 module tb_uart;
 
     import  tb_uart_pkg::*;
+    import  uart_pkg::*;
 
     logic       clk     = '0;
     logic       rstn    = '0;
 
     logic       tx, rts;
+
+    int         error_counter = 0;
 
     logic   [APB_BUS_DW-1:0]    write_data;
     logic   [APB_BUS_DW-1:0]    read_data;
