@@ -53,13 +53,13 @@ package uart_pkg;
 
         typedef struct packed {
 
-        /* [31:27]  */  logic           reserved_2;         /* [Read Only]  Reserved Fields                 */
+        /* [31:27]  */  logic   [4:0]   reserved_2;         /* [Read Only]  Reserved Fields                 */
         /* [26]     */  logic           rx_status;          /* [Read Only]  Receiver Status: [0] - IDLE     */
         /* [25]     */  logic           ufifo_full;         /* [Read Only]  Upstream FIFO full flag         */
         /* [24]     */  logic           ufifo_empty;        /* [Read Only]  Upstream FIFO empty flag        */
         /* [23:16]  */  logic   [7:0]   ufifo_used;         /* [Read Only]  Upstream FIFO used words        */
 
-        /* [15:11]  */  logic           reserved_1;         /* [Read Only]  Reserved Fields                 */
+        /* [15:11]  */  logic   [4:0]   reserved_1;         /* [Read Only]  Reserved Fields                 */
         /* [10]     */  logic           tx_status;          /* [Read Only]  Tranceiver status: [0] - IDLE   */
         /* [9]      */  logic           dfifo_full;         /* [Read Only]  Downstream FIFO full flag       */
         /* [8]      */  logic           dfifo_empty;        /* [Read Only]  Downstream FIFO empty flag      */
@@ -131,17 +131,18 @@ package uart_pkg;
                             /* RO REGISTERS */
         
         typedef struct packed {
-            uart_hwinfo_t          HWINFO;                  /* [2 dword] */  
-            uart_stats_t           STATS;                   /* [1 dword] */  
-            uart_ufifo_t           UFIFO;                   /* [0 dword] */  
+            logic               [31:0]      padding;
+            uart_hwinfo_t                   HWINFO;             /* [2 dword] */  
+            uart_stats_t                    STATS;              /* [1 dword] */  
+            uart_ufifo_t                    UFIFO;              /* [0 dword] */  
         } uart_ro_regs_t;
 
     /* ------------------------------------------------------------------------------ */
                             /* MAIN REGISTERS */
                 
         typedef struct packed {
-            uart_ro_regs_t         RO;                      /* [3 dwords] */ 
-            uart_rw_regs_t         RW;                      /* [7 dwords] */ 
+            uart_ro_regs_t                  RO;                 /* [3 dwords] */ 
+            uart_rw_regs_t                  RW;                 /* [7 dwords] */ 
         } uart_regmap_t;
 
     /* ------------------------------------------------------------------------------ */
@@ -163,8 +164,8 @@ package uart_pkg;
     localparam      UFIFO_WIDTH             = 8;
 
     string          KENEZOER_BAD_PARAM      = "[PARAM ERROR] Bad parameter value!";
-    string          KENEZOER_ERROR          = "[ERROR] An error occured! Module: ";
-    string          KENEZOER_WARNING        = "[ERROR] A warning occured! Module: ";
+    string          KENEZOER_ERROR          = "[ERROR] Module: ";
+    string          KENEZOER_WARNING        = "[WARNING] Module: ";
 
     localparam      IRQ_EVENTS_NUM          = 10;
 

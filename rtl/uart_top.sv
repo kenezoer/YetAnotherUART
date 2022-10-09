@@ -216,9 +216,11 @@ module uart_top
         .i_fifo_almfull             ( ufifo_almfull                 ),
         .i_msb_first                ( REGMAP.RW.CTRL.msb_first      ),
         .i_stop_bit_mode            ( REGMAP.RW.CTRL.stop_bit_mode  ),
+        .i_stop_bit_value           ( REGMAP.RW.CTRL.stop_bit_value ),
 
         .o_rx_done                  ( rx_done                       ),
         .o_rx_started               ( rx_started                    ),
+        .o_rx_status                ( rx_status                     ),
         .o_rx_frame_error           ( rx_bad_frame                  ),
         .o_rx_parity_error          ( rx_parity_error               ),
         .o_rx_word                  ( ufifo_data_in                 ));
@@ -233,6 +235,8 @@ module uart_top
         .i_valid                    ( dfifo_valid                   ),
         .o_ready                    ( tx_ready                      ),
         .o_tx_status                ( tx_status                     ),
+        .o_tx_done                  ( tx_done                       ),
+        .o_tx_started               ( tx_started                    ),
 
         .i_parity_enable            ( REGMAP.RW.CTRL.send_parity    ),
         .i_stop_bit_mode            ( REGMAP.RW.CTRL.stop_bit_mode  ),

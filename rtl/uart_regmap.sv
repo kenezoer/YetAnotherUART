@@ -82,6 +82,33 @@ module uart_regmap
     localparam  ALLOWED_ADDR_RANGE      = TOTAL_REGS_BYTES  - APB_BYTES;
     localparam  ALLOWED_RW_ADDR_RANGE   = RW_REGS_BYTES     - APB_BYTES;
 
+    // pragma translate_off
+    // pragma synthesis_off
+
+    initial begin : startup_regmap_info
+
+        $display("************************************************");
+        $display("*** OpenSource kenezoer's UART SoftIP instance is used: %m");
+        $display("*** Version: v%0d.%0d", IP_VERSION_MAJOR, IP_VERSION_MINOR);
+        $display("*** REGMAP Size:  %0d bytes", TOTAL_REGS_BYTES);
+        $display("*** APB Bus Size: %0d bytes", APB_BYTES);
+        $display("*** RW Zone Size: %0d bytes", RW_REGS_BYTES);
+        $display("*** RO Zone Size: %0d bytes", TOTAL_REGS_BYTES - RW_REGS_BYTES);
+        $display("************************************************");
+
+    end
+
+    initial begin : regmap_size_check
+
+        if(TOTAL_REGS_BYTES % APB_BYTES) begin
+            $error("%s %m regmap is not rounded for APB Bus data width in bytes!", KENEZOER_BAD_PARAM);
+        end
+
+    end
+
+    // pragma synthesis_on
+    // pragma translate_on
+
     //|-----------------------------
     //| Local Variables
     //|-----------------------------
@@ -185,6 +212,10 @@ module uart_regmap
         /* ------------ Upstream FIFO Output ----------------------- */
         always_comb REGMAP_OUT.RO.UFIFO.reserved            = '0;
         always_comb REGMAP_OUT.RO.UFIFO.ufifo_output        = i_ufifo_output;
+
+        /* ------------ Upstream FIFO Output ----------------------- */
+
+        always_comb REGMAP_OUT.RO.padding                   = '0;
 
     /* ------------------------------------------------------------- */
 

@@ -37,6 +37,8 @@ module uart_tx
 
     output  logic                               o_tx,
     output  logic                               o_tx_status,
+    output  logic                               o_tx_done,
+    output  logic                               o_tx_started,
 
     input                                       i_fifo_empty,
     input                                       i_cts,
@@ -76,9 +78,11 @@ module uart_tx
 
     /* ---------------------------------- Internal Logic ------------------------------------------------------- */
 
-    always_comb cts         = i_hw_flow_control_enable ? i_cts : '1;
-    always_comb o_ready     = cts && (tx_state == IDLE);
-    always_comb o_tx_status = !(tx_state == IDLE);
+    always_comb cts             = i_hw_flow_control_enable ? i_cts : '1;
+    always_comb o_ready         = cts && (tx_state == IDLE);
+    always_comb o_tx_status     = !(tx_state == IDLE);
+    always_comb o_tx_done       =  (tx_state == FINISH);
+    always_comb o_tx_started    =  (tx_state == START);
 
     /* --------------------------------------- FSM ------------------------------------------------------------- */
 
@@ -193,6 +197,8 @@ module uart_tx
 
             end
 
+            /* ------------------------------ */
+
         endcase
 
     end
@@ -224,7 +230,7 @@ module uart_tx
     end
 
     always_comb period_done         = (bit_period_counter >=  bit_period_buf);
-    always_comb half_period_done    = (bit_period_counter >= (bit_period_buf >> 1) );
+    always_comb half_period_done    = (bit_period_counter == (bit_period_buf >> 1)) || period_done;
 
         /* ----------------------- */
 
@@ -242,7 +248,7 @@ module uart_tx
 
         data_packet[0]      <= '0;
         data_packet[8:1]    <= data_to_send;
-        data_packet[9]      <= i_parity_enable ? i_data[8] : '0;
+        data_packet[9]      <= i_parity_enable ? ^data_to_send : '0;
         data_packet[11:10]  <= i_stop_bit_value;
 
     end
