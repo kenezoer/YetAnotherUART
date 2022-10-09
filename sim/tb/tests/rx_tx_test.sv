@@ -16,6 +16,12 @@ $display("@ %0d @ [TEST] RX/TX Test started! ", $time);
         //| 2.1 Setup BAUDRATE and registers
         apb_write(32'h8, 32'h10);   // Bit Period
 
+        uart_settings.send_parity       = $urandom;
+        uart_settings.msb_first         = $urandom;
+        uart_settings.hw_flow_ctrl_en   = $urandom;
+        uart_settings.stop_bit_value    = $urandom;
+        uart_settings.stop_bit_mode     = $urandom;
+
         //| 2.2 Randomize data to transmit
         write_data              = '0;
         write_data[7:0]         = $urandom;
@@ -49,5 +55,5 @@ $display("@ %0d @ [TEST] RX/TX Test started! ", $time);
 
     $display("----------------");
 
-    if(error_counter)   $error("[RX/TX Test] finished with errors. Error counter = %0d", error_counter);
+    if(error_counter)   $fatal("[RX/TX Test] finished with errors. Error counter = %0d", error_counter);
     else                $display("[RX/TX Test] finished succesfully!");

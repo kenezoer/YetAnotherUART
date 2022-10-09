@@ -39,6 +39,8 @@ module tb_uart;
     logic   [APB_BUS_DW-1:0]    write_data;
     logic   [APB_BUS_DW-1:0]    read_data;
 
+    uart_control_regs_t uart_settings = '0;
+
     always#10ns clk     = ~clk;
 
     initial @(posedge clk) 
