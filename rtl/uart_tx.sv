@@ -256,7 +256,7 @@ module uart_tx
         data_packet[0]      <= '0;
         data_packet[8:1]    <= data_to_send;
         data_packet[9]      <= parity_enable_buf ? ^data_to_send    :  i_stop_bit_value[1];
-        data_packet[11:10]  <= parity_enable_buf ? i_stop_bit_value : {i_stop_bit_value[0], 1'b1};
+        data_packet[11:10]  <= parity_enable_buf ? {i_stop_bit_value[0], i_stop_bit_value[1]} : {1'b1, i_stop_bit_value[0]};
 
     end
 

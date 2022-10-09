@@ -221,7 +221,7 @@ module uart_rx
     end
 
     always_comb period_done         = (bit_period_counter >=  bit_period_buf);
-    always_comb half_period_done    = (bit_period_counter == (bit_period_buf >> 1)) || period_done;
+    always_comb half_period_done    = (bit_period_counter == ((bit_period_buf >> 1) - 1'b1)) || period_done;
 
 
     /* ------------------------------------------------------------------------------------------------------------ */
@@ -248,7 +248,7 @@ module uart_rx
 
         /* ----------------------- */
     
-    always_comb o_rx_parity_error   =  (rx_state == FINISH) && (^rcvd_data[7:0] != rcvd_data[8]) && parity_enable_buf;
+    always_comb o_rx_parity_error   =  (rx_state == FINISH) && (^rcvd_data[8:1] != rcvd_data[9]) && parity_enable_buf;
 
         /* ----------------------- */
 
@@ -289,19 +289,8 @@ module uart_rx
     else if(rx_state == FINISH) begin
 
         casez(i_stop_bit_mode)
-            2'b0?: begin
-                if(parity_enable_buf)
-                    o_rx_frame_error <= rcvd_data[10] ^ i_stop_bit_value[1];
-                else 
-                    o_rx_frame_error <= rcvd_data[10] ^ i_stop_bit_value[1];
-            end
-
-            2'b1?: begin
-                if(parity_enable_buf)
-                    o_rx_frame_error <= rcvd_data[11:10]  ^ i_stop_bit_value;
-                else
-                    o_rx_frame_error <= rcvd_data[10:9]  ^ i_stop_bit_value;
-            end
+            2'b0?: o_rx_frame_error <= (rcvd_data[9  + parity_enable_buf]      ^  i_stop_bit_value[1]);
+            2'b1?: o_rx_frame_error <= (rcvd_data[10 + parity_enable_buf -:2]  ^ {i_stop_bit_value[0], i_stop_bit_value[1]});
         endcase
 
     end else
