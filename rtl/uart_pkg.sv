@@ -119,9 +119,9 @@ package uart_pkg;
                             /* RW REGISTERS */
         
         typedef struct packed {
-            uart_irq_regs_t                 IRQ_EVENT;          /* [4 dword] */
-            uart_irq_regs_t                 IRQ_MASK;           /* [3 dword] */
-            uart_irq_regs_t                 IRQ_EN;             /* [2 dword] */
+            uart_irq_regs_t                 IRQ_EVENT;          /* [5 dword] */
+            uart_irq_regs_t                 IRQ_MASK;           /* [4 dword] */
+            uart_irq_regs_t                 IRQ_EN;             /* [3 dword] */
             logic               [31:0]      UART_BIT_LENGTH;    /* [2 dword] */
             uart_control_regs_t             CTRL;               /* [1 dword] */  
             uart_dfifo_t                    DFIFO;              /* [0 dword] */  
@@ -131,7 +131,7 @@ package uart_pkg;
                             /* RO REGISTERS */
         
         typedef struct packed {
-            logic               [31:0]      padding;
+            logic               [31:0]      padding;            /* [3 dword] */
             uart_hwinfo_t                   HWINFO;             /* [2 dword] */  
             uart_stats_t                    STATS;              /* [1 dword] */  
             uart_ufifo_t                    UFIFO;              /* [0 dword] */  
@@ -141,8 +141,8 @@ package uart_pkg;
                             /* MAIN REGISTERS */
                 
         typedef struct packed {
-            uart_ro_regs_t                  RO;                 /* [3 dwords] */ 
-            uart_rw_regs_t                  RW;                 /* [7 dwords] */ 
+            uart_ro_regs_t                  RO;                 /* [4 dwords] */ 
+            uart_rw_regs_t                  RW;                 /* [6 dwords] */ 
         } uart_regmap_t;
 
     /* ------------------------------------------------------------------------------ */

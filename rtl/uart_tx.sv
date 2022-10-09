@@ -49,22 +49,23 @@ module uart_tx
 
     input                       [31:0]          i_bit_length,
     input                                       i_msb_first,
-    input                       [8:0]           i_data
+    input                       [7:0]           i_data
 
 );
 
 
     /* ------------------------------------ VARIABLES ---------------------------------------------------------- */
 
-    logic           [3:0]       bit_select;
-    logic                       cts;
-    logic           [7:0]       data_to_send;
-    logic           [11:0]      data_packet;
-    logic                       period_done;
-    logic                       half_period_done;
-    logic           [31:0]      bit_period_buf;
-    logic           [31:0]      bit_period_counter;
-    stop_bit_mode_t             stop_bit_mode;
+    logic           [3:0]       bit_select;             //| Selection of which bit we currently tranceiving
+    logic                       cts;                    //| Hardware Flow Control: cts handling
+    logic           [7:0]       data_to_send;           //| Data to send :)
+    logic           [11:0]      data_packet;            //| Full data packed incl start bit, data to send, parity (if exists), stop bits
+    logic                       period_done;            //| Period done flag
+    logic                       parity_enable_buf;      //| Buffering parity enable
+    logic                       half_period_done;       //| Half period done flag
+    logic           [31:0]      bit_period_buf;         //| Buffering period value to prevent changing in the middle of tranceiving
+    logic           [31:0]      bit_period_counter;     //| Counter for bit period
+    stop_bit_mode_t             stop_bit_mode;          //| Mode of stop bits (0.5, 1, 1.5, 2)
 
     enum logic [2:0]    {
         IDLE                = 3'd0,
@@ -125,7 +126,7 @@ module uart_tx
             SEND_DATA: begin
 
                 if(period_done && (bit_select >= 4'd8)) begin
-                    tx_state_next   = i_parity_enable ? SEND_PARITY : SEND_STOP_BIT;
+                    tx_state_next   = parity_enable_buf ? SEND_PARITY : SEND_STOP_BIT;
                 end else
                     tx_state_next   = SEND_DATA;
 
@@ -213,6 +214,12 @@ module uart_tx
     else if(tx_state inside {IDLE, FINISH})
         bit_period_buf  <= i_bit_length;
 
+    always_ff@(posedge i_clk or negedge i_nrst)
+    if(!i_nrst)
+        parity_enable_buf   <= '0;
+    else if(tx_state inside {IDLE, FINISH})
+        parity_enable_buf   <= i_parity_enable;
+
         /* ----------------------- */
 
     always_ff@(posedge i_clk or negedge i_nrst)
@@ -248,8 +255,8 @@ module uart_tx
 
         data_packet[0]      <= '0;
         data_packet[8:1]    <= data_to_send;
-        data_packet[9]      <= i_parity_enable ? ^data_to_send : '0;
-        data_packet[11:10]  <= i_stop_bit_value;
+        data_packet[9]      <= parity_enable_buf ? ^data_to_send    :  i_stop_bit_value[1];
+        data_packet[11:10]  <= parity_enable_buf ? i_stop_bit_value : {i_stop_bit_value[0], 1'b1};
 
     end
 

@@ -176,8 +176,8 @@ module uart_top
     uart_fifo_fwft #(
 
         .FIFO_PARITY_ENABLE         ( FIFO_PARITY_CHECK_EN          ),
-        .FIFO_AW                    ( UFIFO_USED_WIDTH              ),
-        .FIFO_DW                    ( UFIFO_WIDTH                   )
+        .FIFO_AW                    ( DFIFO_USED_WIDTH              ),
+        .FIFO_DW                    ( DFIFO_WIDTH                   )
 
     ) downstream_fifo_inst (
 

@@ -50,8 +50,6 @@
         input   [APB_BUS_DW - 1 : 0]    data  
     );
 
-        write_data  = data;
-
         @(posedge clk);
         #1fs;
         APB.PSEL       = '1;
@@ -79,20 +77,5 @@
 
 
     endtask : apb_write
-
-    /* ------------------------------ */
-
-    task    SendChar(
-        input   [7:0]   char
-    );
-
-
-    endtask : SendChar
-
-    /* ------------------------------ */
-
-    task    GetChar();
-
-    endtask : GetChar
 
     /* ------------------------------ */

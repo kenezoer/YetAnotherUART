@@ -50,10 +50,10 @@ module uart_irq_gen
         o_events_stats   <= '0;
     else for(int i = 0; i < EVENTS_NUM; i++) begin
 
-        if(i_events_disable[i])
+        if(i_events_disable[i] || !i_events_enable[i])
             o_events_stats[i]   <= '0;
-        else
-            o_events_stats[i]   <= i_events_enable[i] || i_events_itself[i];
+        else if(i_events_enable[i] && !o_events_stats[i])
+            o_events_stats[i]   <= i_events_itself[i];
 
     end
 

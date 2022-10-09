@@ -67,6 +67,7 @@ module uart_rx
     logic                           half_period_done;
     logic               [31:0]      bit_period_counter;
     logic               [31:0]      bit_period_buf;
+    logic                           parity_enable_buf;
     logic               [3:0]       bit_select;
     logic               [15:0]      rcvd_data;
     stop_bit_mode_t                 stop_bit_mode;
@@ -110,7 +111,7 @@ module uart_rx
             GET_DATA:  begin
 
                 if(bit_select >= 4'd8 && period_done)
-                    rx_state_next   = i_parity_enable ? GET_PARITY : GET_STOP_BIT;
+                    rx_state_next   = parity_enable_buf ? GET_PARITY : GET_STOP_BIT;
                 else
                     rx_state_next   = GET_DATA;
 
@@ -196,6 +197,13 @@ module uart_rx
     else if(rx_state inside {IDLE, FINISH})
         bit_period_buf  <= i_bit_length;
 
+    always_ff@(posedge i_clk or negedge i_nrst)
+    if(!i_nrst)
+        parity_enable_buf   <= '0;
+    else if(rx_state inside {IDLE, FINISH})
+        parity_enable_buf   <= i_parity_enable;
+
+
         /* ----------------------- */
 
     always_ff@(posedge i_clk or negedge i_nrst)
@@ -240,7 +248,7 @@ module uart_rx
 
         /* ----------------------- */
     
-    always_comb o_rx_parity_error   =  (rx_state == FINISH) && (^rcvd_data[7:0] != rcvd_data[8]) && i_parity_enable;
+    always_comb o_rx_parity_error   =  (rx_state == FINISH) && (^rcvd_data[7:0] != rcvd_data[8]) && parity_enable_buf;
 
         /* ----------------------- */
 
@@ -280,9 +288,20 @@ module uart_rx
         o_rx_frame_error    <= '0;
     else if(rx_state == FINISH) begin
 
-        casez(i_stop_bit_value)
-            2'b0?: o_rx_frame_error <= rcvd_data[8 + i_parity_enable]       ^ i_stop_bit_value[0];
-            2'b1?: o_rx_frame_error <= rcvd_data[9 + i_parity_enable -: 1]  ^ i_stop_bit_value;
+        casez(i_stop_bit_mode)
+            2'b0?: begin
+                if(parity_enable_buf)
+                    o_rx_frame_error <= rcvd_data[10] ^ i_stop_bit_value[1];
+                else 
+                    o_rx_frame_error <= rcvd_data[10] ^ i_stop_bit_value[1];
+            end
+
+            2'b1?: begin
+                if(parity_enable_buf)
+                    o_rx_frame_error <= rcvd_data[11:10]  ^ i_stop_bit_value;
+                else
+                    o_rx_frame_error <= rcvd_data[10:9]  ^ i_stop_bit_value;
+            end
         endcase
 
     end else

@@ -106,25 +106,15 @@ module uart_regmap
             $error("%s %m regmap is not rounded for APB Bus data width in bytes!", KENEZOER_BAD_PARAM);
         end
 
-    end
+        if(!(APB_DATA_WIDTH inside {8, 16, 32, 64})) begin
+            $fatal("%s %m unsupported APB_DATA_WIDTH parameter value = %0d. Supported values: 8, 16, 32, 64.", KENEZOER_BAD_PARAM, APB_DATA_WIDTH);
+        end
 
-/*
-    initial begin : additional_regmap_check
-
-        $display(" REGMAP_OUT.RW.IRQ_EVENT size         = %0d bits", $bits(REGMAP_OUT.RW.IRQ_EVENT));
-        $display(" REGMAP_OUT.RW.IRQ_MASK size          = %0d bits", $bits(REGMAP_OUT.RW.IRQ_MASK));
-        $display(" REGMAP_OUT.RW.IRQ_EN size            = %0d bits", $bits(REGMAP_OUT.RW.IRQ_EN));
-        $display(" REGMAP_OUT.RW.UART_BIT_LENGTH size   = %0d bits", $bits(REGMAP_OUT.RW.UART_BIT_LENGTH));
-        $display(" REGMAP_OUT.RW.CTRL size              = %0d bits", $bits(REGMAP_OUT.RW.CTRL));
-        $display(" REGMAP_OUT.RW.DFIFO size             = %0d bits", $bits(REGMAP_OUT.RW.DFIFO));
-
-        $display(" REGMAP_OUT.RO.padding size           = %0d bits", $bits(REGMAP_OUT.RO.padding));
-        $display(" REGMAP_OUT.RO.HWINFO size            = %0d bits", $bits(REGMAP_OUT.RO.HWINFO));
-        $display(" REGMAP_OUT.RO.STATS size             = %0d bits", $bits(REGMAP_OUT.RO.STATS));
-        $display(" REGMAP_OUT.RO.UFIFO size             = %0d bits", $bits(REGMAP_OUT.RO.UFIFO));
+        if(APB_ADDR_WIDTH < 12) begin
+            $fatal("%s %m unsupported APB_ADDR_WIDTH parameter value = %0d. Should be more than 12!", KENEZOER_BAD_PARAM, APB_ADDR_WIDTH);
+        end
 
     end
-*/
 
     // pragma synthesis_on
     // pragma translate_on
@@ -139,7 +129,8 @@ module uart_regmap
     logic                                   wr_en;                      //| Write Enable
     logic                                   rd_en;                      //| Read  Enable
     logic                                   flag_error;                 //| Error flag for internal use
-    logic   [APB_ADDR_VALUABLE_WIDTH-1:0]   apb_paddr;
+    logic   [APB_ADDR_VALUABLE_WIDTH-1:0]   apb_paddr;                  //| APB PADDR Valueable
+    uart_regmap_t                           REGMAP_READ;
 
     /* ------------------------------------------ APB3 Slave Logic --------------------------------------------- */
 
@@ -186,7 +177,7 @@ module uart_regmap
         o_apb_prdata        <= '0;
     else begin
         if(rd_en && !flag_error)
-            o_apb_prdata    <= REGMAP_OUT[apb_paddr * 8 +: APB_BYTES * 8];
+            o_apb_prdata    <= REGMAP_READ[apb_paddr * 8 +: APB_BYTES * 8];
     end
 
     /* ------------------------------------------------------------- */
@@ -207,37 +198,50 @@ module uart_regmap
 
     end
 
-
-
-        /* -------------- Hardware Info ---------------------------- */
-        always_comb REGMAP_OUT.RO.HWINFO.parity_check_en    = FIFO_PARITY_CHECK_EN;
-        always_comb REGMAP_OUT.RO.HWINFO.reserved           = '0;
-        always_comb REGMAP_OUT.RO.HWINFO.ufifo_depth        = UFIFO_DEPTH;
-        always_comb REGMAP_OUT.RO.HWINFO.dfifo_depth        = DFIFO_DEPTH;
-        always_comb REGMAP_OUT.RO.HWINFO.ip_version[7:4]    = IP_VERSION_MAJOR;
-        always_comb REGMAP_OUT.RO.HWINFO.ip_version[3:0]    = IP_VERSION_MINOR;
-
-        /* ---------------- Stats Info ----------------------------- */
-        always_comb REGMAP_OUT.RO.STATS.reserved_2          = '0;
-        always_comb REGMAP_OUT.RO.STATS.rx_status           = i_rx_status;
-        always_comb REGMAP_OUT.RO.STATS.ufifo_full          = i_ufifo_full;
-        always_comb REGMAP_OUT.RO.STATS.ufifo_empty         = i_ufifo_empty;
-        always_comb REGMAP_OUT.RO.STATS.ufifo_used          = i_ufifo_used;
-        always_comb REGMAP_OUT.RO.STATS.reserved_1          = '0;
-        always_comb REGMAP_OUT.RO.STATS.tx_status           = i_tx_status;
-        always_comb REGMAP_OUT.RO.STATS.dfifo_full          = i_dfifo_full;
-        always_comb REGMAP_OUT.RO.STATS.dfifo_empty         = i_dfifo_empty;
-        always_comb REGMAP_OUT.RO.STATS.dfifo_used          = i_dfifo_used;
-
-        /* ------------ Upstream FIFO Output ----------------------- */
-        always_comb REGMAP_OUT.RO.UFIFO.reserved            = '0;
-        always_comb REGMAP_OUT.RO.UFIFO.ufifo_output        = i_ufifo_output;
-
-        /* ------------ Upstream FIFO Output ----------------------- */
-
-        always_comb REGMAP_OUT.RO.padding                   = '0;
+    always_comb REGMAP_OUT.RO = REGMAP_READ.RO;
 
     /* ------------------------------------------------------------- */
+
+        /*               APB READ VALUES                             */
+
+        /* -------------- R/W Fields ------------------------------- */
+        always_comb REGMAP_READ.RW.IRQ_EVENT                = i_irq_stats;
+        always_comb REGMAP_READ.RW.IRQ_MASK                 = REGMAP_OUT.RW.IRQ_MASK;
+        always_comb REGMAP_READ.RW.IRQ_EN                   = REGMAP_OUT.RW.IRQ_EN;
+        always_comb REGMAP_READ.RW.UART_BIT_LENGTH          = REGMAP_OUT.RW.UART_BIT_LENGTH;
+        always_comb REGMAP_READ.RW.CTRL                     = REGMAP_OUT.RW.CTRL;
+        always_comb REGMAP_READ.RW.DFIFO                    = REGMAP_OUT.RW.DFIFO;
+
+        /* -------------- Hardware Info ---------------------------- */
+        always_comb REGMAP_READ.RO.HWINFO.parity_check_en   = FIFO_PARITY_CHECK_EN;
+        always_comb REGMAP_READ.RO.HWINFO.reserved          = '0;
+        always_comb REGMAP_READ.RO.HWINFO.ufifo_depth       = UFIFO_DEPTH;
+        always_comb REGMAP_READ.RO.HWINFO.dfifo_depth       = DFIFO_DEPTH;
+        always_comb REGMAP_READ.RO.HWINFO.ip_version[7:4]   = IP_VERSION_MAJOR;
+        always_comb REGMAP_READ.RO.HWINFO.ip_version[3:0]   = IP_VERSION_MINOR;
+
+        /* ---------------- Stats Info ----------------------------- */
+        always_comb REGMAP_READ.RO.STATS.reserved_2         = '0;
+        always_comb REGMAP_READ.RO.STATS.rx_status          = i_rx_status;
+        always_comb REGMAP_READ.RO.STATS.ufifo_full         = i_ufifo_full;
+        always_comb REGMAP_READ.RO.STATS.ufifo_empty        = i_ufifo_empty;
+        always_comb REGMAP_READ.RO.STATS.ufifo_used         = i_ufifo_used;
+        always_comb REGMAP_READ.RO.STATS.reserved_1         = '0;
+        always_comb REGMAP_READ.RO.STATS.tx_status          = i_tx_status;
+        always_comb REGMAP_READ.RO.STATS.dfifo_full         = i_dfifo_full;
+        always_comb REGMAP_READ.RO.STATS.dfifo_empty        = i_dfifo_empty;
+        always_comb REGMAP_READ.RO.STATS.dfifo_used         = i_dfifo_used;
+
+        /* ------------ Upstream FIFO Output ----------------------- */
+        always_comb REGMAP_READ.RO.UFIFO.reserved           = '0;
+        always_comb REGMAP_READ.RO.UFIFO.ufifo_output       = i_ufifo_output;
+
+        /* ------------ Upstream FIFO Output ----------------------- */
+
+        always_comb REGMAP_READ.RO.padding                  = '0;
+
+    /* ------------------------------------------------------------- */
+
 
     always_comb o_ufifo_read_req    =   !flag_error                     && 
                                          rd_en                          && 
