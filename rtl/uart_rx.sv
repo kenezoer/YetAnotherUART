@@ -263,13 +263,13 @@ module uart_rx
 
     always_ff@(posedge i_clk or negedge i_nrst)
     if(!i_nrst)
-        o_rx_word        <= '0;
+        o_rx_word       <= '0;
     else if(rx_state == FINISH) begin
 
         if(i_msb_first)
-            o_rx_word    <= {rcvd_data[1], rcvd_data[2], rcvd_data[3], rcvd_data[4], rcvd_data[5], rcvd_data[6], rcvd_data[7], rcvd_data[8]};
+            o_rx_word   <= { << {rcvd_data[8:1]}}; // Bus reversing via streaming operators
         else
-            o_rx_word    <=  rcvd_data[8:1];
+            o_rx_word   <=       rcvd_data[8:1];
 
     end
 

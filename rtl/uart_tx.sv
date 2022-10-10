@@ -243,9 +243,9 @@ module uart_tx
 
     always_comb begin
         if(i_msb_first)
-            data_to_send    = {i_data[0], i_data[1], i_data[2], i_data[3], i_data[4], i_data[5], i_data[6], i_data[7]};
+            data_to_send    = { << {i_data}}; // Bus index reversing via streaming operator
         else
-            data_to_send    =  i_data;
+            data_to_send    =       i_data;
     end
 
     always_ff@(posedge i_clk or negedge i_nrst)

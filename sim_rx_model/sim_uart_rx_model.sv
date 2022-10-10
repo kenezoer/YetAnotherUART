@@ -23,10 +23,18 @@
 `ifndef     __KENEZOER_UART_SIM_RX_DEFINED__
 `define     __KENEZOER_UART_SIM_RX_DEFINED__
 
+/*
+ * NOTICE: This module is used only for simulation.
+ * The main idea is to get an opportunity of translating
+ * ASCII symbols which would be transmitted via real uart,
+ * receive them throught this module and then print it into the file
+ */
+
 module sim_uart_rx_model#(
 
-    parameter           CLK_FREQUENCY_HZ    =   1000,
-    parameter           BAUDRATE            =   115200
+    parameter string    FILE_NAME           = "YetAnotherUART.log"
+    parameter           CLK_FREQUENCY_HZ    = 1000,
+    parameter           BAUDRATE            = 115200
 
 )(
     input               i_clk,
